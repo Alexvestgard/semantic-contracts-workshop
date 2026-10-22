@@ -1,5 +1,13 @@
 # Semantic contracts workshop: review proposal
 
+> **22 October decision update:** The AI exercise now uses 20 SQL questions and
+> three scored stages: baseline → prompt improvement → prompt regression. Restore
+> the improved prompt, then protect its semantic requirements; neither final step
+> runs another eval. Gemma 4 E2B Q4_K_M in Docker/Codespaces is selected and basic
+> inference was confirmed by Mark. [The implementation guide](sql-eval.md) defines
+> the current scope. The original proposal below is retained as planning history;
+> its ten-question and vocabulary-comparison sections are superseded for this exercise.
+
 Documentation-only proposal · 20 October 2026
 
 Mark: review the two-loop agenda, proposed time budgets and benchmark targets, then prioritize the first baseline-validation PR. You own the workshop and review decisions. Model, telemetry UI, vocabulary subset, exact questions, distribution permissions and budget remain open.
