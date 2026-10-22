@@ -1,0 +1,56 @@
+# Development-only workshop MCP definitions and plugin preferences. No credentials or user paths.
+# Project configuration loads after the user trusts this repository.
+
+[mcp_servers.node_repl]
+enabled = true
+command = "sh"
+args = ["-c", 'exec "$(git rev-parse --show-toplevel)/scripts/dev/mcp-node-repl"']
+startup_timeout_sec = 120
+
+[mcp_servers."1password"]
+enabled = true
+command = "sh"
+args = ["-c", 'exec "$(git rev-parse --show-toplevel)/scripts/dev/mcp-1password"']
+
+# Keep the existing authentication approval policy.
+[mcp_servers."1password".tools.authenticate]
+approval_mode = "approve"
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."visualize@openai-bundled"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."template-creator@openai-primary-runtime"]
+enabled = true
+
+[plugins."google-calendar@openai-curated"]
+enabled = true
+
+[plugins."slack@openai-curated"]
+enabled = true
+
+[plugins."codex-app-tools@openai-bundled"]
+enabled = true
+
+[plugins."unified-computer-use@openai-bundled"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
+enabled = false
+
+[plugins."code-review@openai-bundled"]
+enabled = true

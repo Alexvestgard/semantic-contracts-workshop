@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+for candidate in "${WORKSHOP_NODE_REPL_BIN:-}" "$(command -v node_repl || true)" /Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl "$HOME/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl"; do
+    if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+        if [ "${1:-}" = --check ]; then printf '%s\n' 'Node REPL executable found'; exit 0; fi
+        node_binary="$(dirname "$candidate")/node"
+        if [ -z "${NODE_REPL_NODE_PATH:-}" ] && [ -x "$node_binary" ]; then
+            export NODE_REPL_NODE_PATH="$node_binary"
+        fi
+        exec "$candidate" "$@"
+    fi
+done
+echo 'Install the desktop Node REPL runtime or set WORKSHOP_NODE_REPL_BIN to its executable.' >&2
+exit 1
