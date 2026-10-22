@@ -1,0 +1,17 @@
+#!/bin/sh
+# Optional developer tracking, isolated from HQ and other projects.
+set -eu
+WORKSHOP_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+export KATA_HOME="$WORKSHOP_ROOT/.kata/local"
+unset KATA_SERVER KATA_DSN KATA_DB
+if [ -f "$WORKSHOP_ROOT/.kata.local.toml" ]; then
+    echo 'Workshop Kata uses a dedicated local instance; resolve .kata.local.toml routing before continuing.' >&2
+    exit 1
+fi
+for arg in "$@"; do
+    case "$arg" in
+        --daemon|--daemon=*) echo 'Workshop Kata does not allow daemon overrides.' >&2; exit 1 ;;
+    esac
+done
+cd "$WORKSHOP_ROOT"
+exec kata "$@"

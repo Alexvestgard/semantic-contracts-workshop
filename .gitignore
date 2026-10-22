@@ -22,3 +22,8 @@ venv/
 
 # IDEs & editors
 .vscode/
+
+# Maintainer-only agent state and private working outputs
+/.kata/local/
+/.kata.local.toml
+/data/private/
