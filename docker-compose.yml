@@ -20,7 +20,8 @@ services:
       start_period: 30s
     command: bash -c "
         apt-get update &&
-        apt-get install -y docker.io postgresql-client &&
+        apt-get install -y postgresql-client &&
+        (command -v docker >/dev/null || apt-get install -y docker.io) &&
         pip install -r /workspace/requirements.txt &&
         sleep infinity
       "

@@ -2,8 +2,16 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "devcontainer",
   "overrideCommand": false,
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "16gb"
+  },
   "features": {
-    "ghcr.io/devcontainers/features/common-utils:2": {}
+    "ghcr.io/devcontainers/features/common-utils:2": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+  "remoteEnv": {
+    "SQL_EVAL_HOST_ROOT": "${localWorkspaceFolder}"
   },
   "customizations": {
     "vscode": {
