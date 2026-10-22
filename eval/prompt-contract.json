@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "required_semantics": {
+    "missing_text": "null_or_blank",
+    "object_key": "object_id",
+    "public_domain": "explicit_true",
+    "ordering": "question"
+  },
+  "approved_instructions_sha256": "4a4e5ac6508164b35882af8cab38c21a269d3b99372d9d9425e9c730ec08bfba",
+  "scope": "Checks declared semantic settings and approved free-text instructions; does not prove model compliance."
+}
