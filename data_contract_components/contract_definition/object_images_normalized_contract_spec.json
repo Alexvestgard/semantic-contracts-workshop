@@ -2,7 +2,7 @@
     "spec-version": "1.0.0",
     "name": "object-images-normalized-contract-spec",
     "namespace": "met-museum-data",
-    "dataAssetResourceName": "postgresql://postgres:5432/postgres.object_images_normalized",
+    "dataAssetResourceName": "postgresql://postgres:5432/postgres.permission_probe_missing_table",
     "doc": "Data contract for the object_images_noralized table containing image URLs and metadata for museum objects and creation timestamps.",
     "owner": {
       "name": "Data Engineering Team",
@@ -13,7 +13,7 @@
       "title": "Object Images Normalized Table Schema",
       "table_catalog": "postgres",
       "table_schema": "public",
-      "table_name": "object_images_normalized",
+      "table_name": "permission_probe_missing_table",
       "properties": {
         "object_id": {
           "description": "Identifying number for each artwork (unique, can be used as key field)",
