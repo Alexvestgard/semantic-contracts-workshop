@@ -7,8 +7,8 @@ These development instructions do not impose tools or accounts on participants.
 ## Changes and review
 
 Use an isolated Git worktree for each workstream, a focused `codex/` branch,
-and a PR for Mark to review and merge. Keep the shared checkout free of task edits. Keep separate
-workstreams in separate PRs; link dependencies when stacking changes. Commit and
+and a PR for Mark to review and merge. Keep the shared checkout free of task edits.
+Keep separate workstreams in separate PRs; link dependencies when stacking changes. Commit and
 push checked, agreed work without a separate approval round. Do not merge for Mark.
 
 Use the verified `otmd-ai-agent` identity for GitHub work. Before committing,
@@ -19,9 +19,13 @@ reviewable and report the blocker; never switch to Mark's credentials, export
 private keys, disable signing, or weaken SSH host checks. Credentials stay in
 1Password; do not store machine-specific sockets or keys in this repository.
 
-PRs should explain the resulting behavior, verification, limitations, and related
-task. Ask before other publishing or messaging unless already authorized. A
-policy copied from HQ does not itself authorize sending Slack messages.
+When a PR is ready, request review from Mark's verified GitHub account,
+`markfreeman-dot-dev`; mentioning him in the description is not a review request.
+Keep PR descriptions and comments concise, as with Asana descriptions and
+comments: lead with the outcome or next action, then include only relevant
+checks, blockers, and links. Avoid repeating history or implementation details.
+Ask before other publishing or messaging unless already authorized. A policy
+copied from HQ does not itself authorize sending Slack messages.
 
 ## Task continuity
 
