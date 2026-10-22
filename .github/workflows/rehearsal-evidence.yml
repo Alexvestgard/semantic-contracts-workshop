@@ -27,6 +27,8 @@ jobs:
         if: always()
         with:
           name: contract-tests-${{ github.sha }}
+          include-hidden-files: true
+          if-no-files-found: error
           path: |
             .evidence/
             test_output.log
@@ -51,6 +53,8 @@ jobs:
         if: always()
         with:
           name: original-startup-${{ github.sha }}
+          include-hidden-files: true
+          if-no-files-found: error
           path: .evidence/
       - name: Clean up the isolated runner
         if: always()
@@ -89,6 +93,8 @@ jobs:
         if: always()
         with:
           name: seeded-environment-and-notebook-${{ github.sha }}
+          include-hidden-files: true
+          if-no-files-found: error
           path: .evidence/
       - name: Clean up the isolated runner
         if: always()
