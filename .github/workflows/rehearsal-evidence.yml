@@ -55,3 +55,41 @@ jobs:
       - name: Clean up the isolated runner
         if: always()
         run: docker compose -f docker-compose.yml down --volumes --remove-orphans
+
+  seeded-environment-and-notebook:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start the original development environment
+        shell: bash
+        run: |
+          mkdir -p .evidence
+          docker compose -f docker-compose.yml up -d 2>&1 | tee .evidence/startup-detached.log
+      - name: Wait for installation, verify seeded data, and execute the notebook
+        shell: bash
+        run: |
+          docker compose -f docker-compose.yml exec -T devcontainer bash -lc '
+            for attempt in {1..180}; do
+              if pgrep -fx "sleep infinity" >/dev/null; then
+                python .github/scripts/verify-workshop-runtime.py
+                exit $?
+              fi
+              sleep 2
+            done
+            echo "Development container installation did not complete" >&2
+            exit 1
+          ' 2>&1 | tee .evidence/runtime-checks.log
+      - name: Capture original environment logs
+        if: always()
+        run: |
+          docker compose -f docker-compose.yml ps --all > .evidence/containers.txt
+          docker compose -f docker-compose.yml logs --no-color > .evidence/containers.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: seeded-environment-and-notebook-${{ github.sha }}
+          path: .evidence/
+      - name: Clean up the isolated runner
+        if: always()
+        run: docker compose -f docker-compose.yml down --volumes --remove-orphans
