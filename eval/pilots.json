@@ -1,0 +1,17 @@
+[
+  {
+    "id": "p01",
+    "question": "Return the three largest object IDs in descending order.",
+    "ordered": true
+  },
+  {
+    "id": "p02",
+    "question": "How many artworks belong to the Musical Instruments department? Return one count.",
+    "ordered": false
+  },
+  {
+    "id": "p03",
+    "question": "Return object ID and title for the first three Asian Art artworks by ascending object ID.",
+    "ordered": true
+  }
+]
