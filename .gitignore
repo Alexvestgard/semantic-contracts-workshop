@@ -27,3 +27,5 @@ venv/
 /.kata/local/
 /.kata.local.toml
 /data/private/
+# Local evaluation artifacts contain full model responses and remain outside Git.
+artifacts/
