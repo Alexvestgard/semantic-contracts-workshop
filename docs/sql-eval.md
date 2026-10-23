@@ -27,7 +27,8 @@ Keep artifacts inside the repository when running from the devcontainer. The run
 uses the caller's non-root UID; when the terminal runs as root, it grants UID 1000
 ownership of the result directory and runs the agent as that user.
 
-From the repository root:
+Wait for the normal workshop startup to finish loading the museum data, then run
+these commands from the repository root:
 
 ```sh
 python scripts/sql_eval.py build
@@ -36,10 +37,16 @@ python scripts/sql_eval.py verify-gold
 python scripts/sql_eval.py isolation
 ```
 
-The `workshop-sql-eval` Compose project has its own database and named volume. It
-does not change the original workshop database. `start` waits for database seeding
-and the model's `READY` inference probe to exit successfully. Keep its volumes when
-stopping containers to retain the model cache.
+The eval uses the workshop's existing `postgres` database. `start` grants the
+`eval_reader` account SELECT access to its eight museum tables, connects the database
+container to the internal eval network, and waits for the model's `READY` inference
+probe. It does not seed data or create another database or database volume.
+
+When exactly one workshop PostgreSQL container is running, it is selected
+automatically. If several are running, set `SQL_EVAL_DB_CONTAINER` to the intended
+container name before running `start`. `python scripts/sql_eval.py prepare-db`
+performs only the database access setup, without starting the model.
+Keep the model volume when stopping containers to retain its cache.
 
 Docker Desktop may hide the pinned runner from Compose dependency discovery; the
 known limitation and native Linux target are recorded in [model setup](model-runner.md).
@@ -96,9 +103,12 @@ has a manifest and one JSON trace per question: visible model response, action,
 tool result/error, token usage, final SQL, tool count, and elapsed time. No hidden
 reasoning is requested. Reports show SQL errors, timeouts, and wrong results.
 
-All stages use fresh question contexts, the same database fingerprint, model digest,
-question order, decoding settings, code hash, and budget. The comparison command
-rejects differing controls or gold identities. Temperature is zero; this does not
+All stages use fresh question contexts and the same model digest, question order,
+decoding settings, code hash, and budget. Keep the workshop data unchanged through
+all three runs and scoring; the eval does not fingerprint the database. The scorer
+still checks that reference queries agree with the expected answers, but this does
+not detect every possible data change. The comparison command rejects differing
+recorded controls or gold identities. Temperature is zero; this does not
 guarantee deterministic CPU inference. Repeat paired questions before drawing a
 strong conclusion from a small score difference.
 
@@ -163,6 +173,10 @@ The database role grants SELECT only; the SQL parser rejects writes, multiple
 statements, non-museum tables, row locks, and functions outside a small allowlist.
 Only the controlled schema tool queries catalog metadata.
 
+The eval requirements are `psycopg[binary]`, already used by the workshop, and
+SQLGlot 30.24.0 for SQL parsing. SQLGlot uses the
+[MIT license](https://github.com/tobymao/sqlglot/blob/v30.24.0/LICENSE).
+
 The scorer image contains gold and reads completed answers. Gold is never loaded
 into the agent process or database. The isolation check scans the actual agent image
 for a gold-only sentinel. This protects answers from the agent, not from a participant
@@ -177,9 +191,10 @@ python -m venv .venv
 ```
 
 The database integration tests additionally require `EVAL_TEST_DSN` pointing to the
-dedicated `museum_eval` database with the `eval_reader` role. They check real role
-permissions, server timeouts, row limits, and absence of gold tables. They refuse
-another database name.
+seeded workshop database with the `eval_reader` role. They check real role
+permissions, server timeouts, row limits, and absence of gold tables without
+changing museum data. CI uses the normal workshop startup in its own Compose
+project before running these checks.
 
 ## Review and acceptance
 

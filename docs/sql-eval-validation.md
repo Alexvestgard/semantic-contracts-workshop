@@ -4,6 +4,19 @@ The evaluation harness is implemented and locally tested. Workshop acceptance st
 requires the three scored runs in a fresh four-core, 16 GB Codespace. No baseline,
 improvement, or regression score is claimed in this record.
 
+## PR #9 database simplification
+
+The eval now uses the existing workshop PostgreSQL database through `eval_reader`.
+The separate database, seed service, migration dependencies, and database
+fingerprinting were removed. No museum data was reloaded for this check.
+SQLGlot 30.24.0 (MIT) replaces pglast (GPL-3.0-or-later) as the SQL parser.
+
+Validation on ARM64 Docker Desktop: 28 unit checks passed, all five database
+integration checks passed against the running workshop database, and all 20
+reference queries matched the source-derived answers. The rebuilt agent image
+passed the gold-isolation check. Compose setup and the repository configuration
+check passed. Native Codespaces rehearsal remains open.
+
 ## Local checks on 22 October 2026
 
 The host was ARM64 Docker Desktop. The pinned runner used four CPU cores and a
@@ -25,7 +38,8 @@ The host was ARM64 Docker Desktop. The pinned runner used four CPU cores and a
 
 The source JSON hash is
 `10eae3d1e7d8186e24dae68b4c783a7f5f841317f37ec9eb64ebf20527fd80cb`.
-The seeded database fingerprint is
+The original isolated-database pilot recorded this database fingerprint (the current
+implementation reuses the workshop database and no longer calculates it):
 `3ca6d0b4f5ddea133f598b715587e6ebdd38468b2672353b96a414a72ea627fd`.
 
 ## Pilot evidence
@@ -36,8 +50,10 @@ invalid SQL, and timeouts. The final shared setup constrains the JSON action for
 and exposes table and column names through the schema tool. Model mistakes remain
 in the traces; correct answers are not required to freeze a pilot budget.
 
-The [manifest](evidence/sql-eval-local-pilot/manifest.json) records the final local
-setup using the improved prompt. These are timing pilots, not baseline scores.
+The [manifest](evidence/sql-eval-local-pilot/manifest.json) records the local
+setup before the PR #9 database simplification, using the improved prompt.
+These are timing pilots, not baseline scores. The captured files are retained
+unchanged as historical evidence.
 
 | Pilot trace | Outcome | Database calls | Seconds |
 | --- | --- | ---: | ---: |
