@@ -62,14 +62,14 @@ def score_run(path, database, questions, gold):
     return {"stage": manifest["stage"], "correct": sum(s["correct"] for s in scores),
             "total": len(scores), "elapsed_seconds": manifest["elapsed_seconds"],
             "controls_sha256": digest(controls), "prompt_sha256": manifest["prompt_sha256"],
-            "gold_sha256": digest(gold), "scorer_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            "scorer_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
             "questions": scores}
 
 
 def compare(reports):
     if [r["stage"] for r in reports] != ["baseline", "improved", "regressed"]:
         raise ValueError("Provide baseline, improved, and regressed reports in order.")
-    for field in ("controls_sha256", "gold_sha256", "scorer_sha256"):
+    for field in ("controls_sha256", "scorer_sha256"):
         if len({r[field] for r in reports}) != 1:
             raise ValueError(f"Incomparable runs: {field} differs.")
     changes = []

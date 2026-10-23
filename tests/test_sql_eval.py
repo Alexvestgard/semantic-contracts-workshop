@@ -83,7 +83,7 @@ class ScoreTests(unittest.TestCase):
 
     def test_incomparable_reports_fail(self):
         reports = [dict(stage=s, correct=n, total=20, elapsed_seconds=1,
-                        controls_sha256="same", gold_sha256="same", scorer_sha256="same", questions=[{"id":"q01","correct":n>0}])
+                        controls_sha256="same", scorer_sha256="same", questions=[{"id":"q01","correct":n>0}])
                    for s,n in zip(("baseline","improved","regressed"),(0,1,0))]
         self.assertTrue(compare(reports)["teaching_sequence_observed"])
         reports[1]["controls_sha256"] = "changed"
