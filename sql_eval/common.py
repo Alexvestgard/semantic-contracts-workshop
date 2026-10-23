@@ -1,9 +1,24 @@
 """JSON serialization for eval inputs and results."""
 
 import json
+import math
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
+
+
+def validate_rows(rows):
+    """Require a rectangular JSON table with scalar cells."""
+    if not isinstance(rows, list) or any(not isinstance(row, list) for row in rows):
+        raise ValueError("Return rows as an array of arrays, including for a single value.")
+    if rows and (not rows[0] or any(len(row) != len(rows[0]) for row in rows)):
+        raise ValueError("Each row must have the same nonzero number of columns.")
+    for row in rows:
+        for value in row:
+            if value is not None and not isinstance(value, (str, int, float, bool)):
+                raise ValueError("Answer cells must be strings, numbers, booleans, or null.")
+            if isinstance(value, float) and not math.isfinite(value):
+                raise ValueError("Answer numbers must be finite.")
 
 
 def json_value(value):

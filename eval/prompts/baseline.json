@@ -1,0 +1,4 @@
+{
+  "instructions": "Answer the question using the database tools. Submit the requested result values as rows.",
+  "semantics": {}
+}
