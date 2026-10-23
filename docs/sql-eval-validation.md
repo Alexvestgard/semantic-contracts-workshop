@@ -10,7 +10,8 @@ The eval now uses the existing workshop PostgreSQL database through `eval_reader
 The separate database, seed service, migration dependencies, and database
 fingerprinting were removed. No museum data was reloaded for this check.
 SQLGlot 30.24.0 (MIT) replaces pglast (GPL-3.0-or-later) as the SQL parser.
-The gold file and score reports no longer include source-data or gold-answer hashes.
+The eval records settings and prompt text directly. SHA fields and hash checks
+were removed from run metadata, reports, budgets, and prompt protection.
 
 Validation on ARM64 Docker Desktop: 28 unit checks passed, all five database
 integration checks passed against the running workshop database, and all 20
@@ -37,10 +38,6 @@ The host was ARM64 Docker Desktop. The pinned runner used four CPU cores and a
 | Configuration | Compose validation and repository development checks passed |
 | GitHub CI on implementation commit `d2932af` | SQL eval checks and both existing Docker Image CI jobs passed |
 
-The original isolated-database pilot recorded this database fingerprint (the current
-implementation reuses the workshop database and no longer calculates it):
-`3ca6d0b4f5ddea133f598b715587e6ebdd38468b2672353b96a414a72ea627fd`.
-
 ## Pilot evidence
 
 Pilots use separate questions and do not count toward the 60 scored attempts.
@@ -49,10 +46,9 @@ invalid SQL, and timeouts. The final shared setup constrains the JSON action for
 and exposes table and column names through the schema tool. Model mistakes remain
 in the traces; correct answers are not required to freeze a pilot budget.
 
-The [manifest](evidence/sql-eval-local-pilot/manifest.json) records the local
-setup before the PR #9 database simplification, using the improved prompt.
-These are timing pilots, not baseline scores. The captured files are retained
-unchanged as historical evidence.
+The traces below record the local setup before the PR #9 simplification, using
+the improved prompt. These are timing pilots, not baseline scores. The three
+traces are retained unchanged; metadata files from the old format are excluded.
 
 | Pilot trace | Outcome | Database calls | Seconds |
 | --- | --- | ---: | ---: |
@@ -60,8 +56,8 @@ unchanged as historical evidence.
 | [Musical Instruments count](evidence/sql-eval-local-pilot/p02.json) | Submitted SQL | 6 | 139.928 |
 | [First three Asian Art artworks](evidence/sql-eval-local-pilot/p03.json) | Timeout | 10 | 180.007 |
 
-The [derived local budget](evidence/sql-eval-local-pilot/budget.json) allows 13
-database calls and 271 seconds per question. Its worst-case question time across
+The budget derived from those pilots allowed 13 database calls and 271 seconds
+per question. Its worst-case question time across
 60 attempts is 4 hours 31 minutes, so it does not establish that the exercise fits
 the three-hour workshop. Repeat these pilots
 in Codespaces before selecting its limits. A local timing budget is not a workshop

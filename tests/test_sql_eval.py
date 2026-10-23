@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import patch
 
 from sql_eval.agent import attempt, parse_action
-from sql_eval.common import digest, read_json, write_json
+from sql_eval.common import read_json, write_json
 from sql_eval.database import validate_sql
 from sql_eval.prompts import protect
 from sql_eval.score import compare, equal_rows, score_run, verify_gold
@@ -83,10 +83,10 @@ class ScoreTests(unittest.TestCase):
 
     def test_incomparable_reports_fail(self):
         reports = [dict(stage=s, correct=n, total=20, elapsed_seconds=1,
-                        controls_sha256="same", scorer_sha256="same", questions=[{"id":"q01","correct":n>0}])
+                        controls={"budget":{"max_tool_calls":12}}, questions=[{"id":"q01","correct":n>0}])
                    for s,n in zip(("baseline","improved","regressed"),(0,1,0))]
         self.assertTrue(compare(reports)["teaching_sequence_observed"])
-        reports[1]["controls_sha256"] = "changed"
+        reports[1]["controls"]["budget"]["max_tool_calls"] = 15
         with self.assertRaises(ValueError):
             compare(reports)
 
@@ -106,7 +106,7 @@ class ScoreTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)
             manifest = {"complete":True,"pilot":False,"stage":"baseline","elapsed_seconds":1,
-                        "prompt_sha256":"p", "controls":{"questions_sha256":digest(questions),
+                        "prompt":{"instructions":"Count artworks"}, "controls":{"questions":questions,
                         "question_ids":["q"]}}
             write_json(path / "manifest.json", manifest)
             write_json(path / "q.json", {"id":"q","status":"submitted","sql":"SELECT COUNT(object_id) FROM object",

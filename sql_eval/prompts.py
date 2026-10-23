@@ -1,7 +1,5 @@
 """Render explicit semantic choices and check the protected prompt."""
 
-from .common import digest
-
 RULES = {
     "missing_text": {
         "null_or_blank": "Treat NULL and empty or whitespace-only text as missing. For populated text, use NULLIF(BTRIM(column), '') IS NOT NULL.",
@@ -26,11 +24,11 @@ def render(prompt):
 def protect(prompt, contract):
     errors = [key for key, value in contract["required_semantics"].items()
               if prompt.get("semantics", {}).get(key) != value]
-    if digest(prompt["instructions"]) != contract["approved_instructions_sha256"]:
-        errors.append("instructions changed; review and update their approved hash")
+    if prompt["instructions"] != contract["approved_instructions"]:
+        errors.append("instructions changed; review and update the approved text")
     if set(prompt.get("semantics", {})) != set(contract["required_semantics"]):
         errors.append("semantic rule set changed")
     if errors:
         raise ValueError("Prompt contract failed: " + "; ".join(errors))
     render(prompt)
-    return {"status": "pass", "prompt_sha256": digest(prompt), "contract_sha256": digest(contract)}
+    return {"status": "pass"}
