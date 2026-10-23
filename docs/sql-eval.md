@@ -108,7 +108,7 @@ decoding settings, code hash, and budget. Keep the workshop data unchanged throu
 all three runs and scoring; the eval does not fingerprint the database. The scorer
 still checks that reference queries agree with the expected answers, but this does
 not detect every possible data change. The comparison command rejects differing
-recorded controls or gold identities. Temperature is zero; this does not
+recorded controls or scorer code. Temperature is zero; this does not
 guarantee deterministic CPU inference. Repeat paired questions before drawing a
 strong conclusion from a small score difference.
 
@@ -158,7 +158,8 @@ query is correct for every future dataset.
 
 Reference SQL and expected results live in `eval/gold/answers.json`. Expected results
 were calculated independently from the checked-in JSON, then checked against all
-20 reference queries in PostgreSQL. The gold file records the source SHA-256.
+20 reference queries in PostgreSQL. Keep these answers unchanged across the three
+scored stages; the eval does not record or compare hashes of the gold file.
 `scripts/build_sql_eval_fixtures.py` reproduces the draft fixtures; run it only before
 freezing a comparison because it rewrites questions, answers, and prompt versions.
 Preserve the repository's museum attribution and source history; no images or live

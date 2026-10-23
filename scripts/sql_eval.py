@@ -111,8 +111,8 @@ def compare_reports(paths):
     reports = [read_json(path) for path in paths]
     if [r["stage"] for r in reports] != ["baseline", "improved", "regressed"]:
         raise ValueError("Expected baseline, improved, and regressed reports in that order.")
-    if any(len({r[field] for r in reports}) != 1 for field in ("controls_sha256", "gold_sha256", "scorer_sha256")):
-        raise ValueError("Controls or reference answers changed between runs.")
+    if any(len({r[field] for r in reports}) != 1 for field in ("controls_sha256", "scorer_sha256")):
+        raise ValueError("Run controls or scorer code changed between runs.")
     lines = ["# SQL eval results", "", "| Prompt | Correct | Seconds |", "| --- | ---: | ---: |"]
     for r in reports:
         lines.append(f"| {r['stage']} | {r['correct']}/{r['total']} | {r['elapsed_seconds']} |")

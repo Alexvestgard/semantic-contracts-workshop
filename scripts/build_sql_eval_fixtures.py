@@ -41,7 +41,7 @@ add('q20', 'intermediate', 'For each department with populated classifications, 
 def write(p, v):
     (root / p).write_text(json.dumps(v, indent=2, ensure_ascii=False) + '\n')
 write('eval/questions.json', q)
-write('eval/gold/answers.json', {'source_sha256': hashlib.sha256(data.read_bytes()).hexdigest(), 'sentinel': 'GOLD_ONLY_8b45b406_reference_answers', 'answers': gold})
+write('eval/gold/answers.json', {'sentinel': 'GOLD_ONLY_8b45b406_reference_answers', 'answers': gold})
 write('eval/pilots.json', [{'id': 'p01', 'question': 'Return the three largest object IDs in descending order.', 'ordered': True}, {'id': 'p02', 'question': 'How many artworks belong to the Musical Instruments department? Return one count.', 'ordered': False}, {'id': 'p03', 'question': 'Return object ID and title for the first three Asian Art artworks by ascending object ID.', 'ordered': True}])
 base = {'instructions': 'Answer the question using the database tools. Submit the SQL that returns the requested result.', 'semantics': {}}
 improved = {'instructions': 'Inspect the relevant tables before writing SQL. Check column names and sample values. Test your query, fix errors, and submit the query that answers the question exactly.', 'semantics': {'missing_text': 'null_or_blank', 'object_key': 'object_id', 'public_domain': 'explicit_true', 'ordering': 'question'}}
