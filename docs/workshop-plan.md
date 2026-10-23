@@ -7,6 +7,10 @@
 > inference was confirmed by Mark. [The implementation guide](sql-eval.md) defines
 > the current scope. The original proposal below is retained as planning history;
 > its ten-question and vocabulary-comparison sections are superseded for this exercise.
+>
+> **PR #9 review decision:** Reuse the existing workshop database and remove
+> database fingerprinting. Keep its data unchanged during the three scored stages;
+> the eval adds read-only access and does not run a separate seed process.
 
 Documentation-only proposal · 20 October 2026
 

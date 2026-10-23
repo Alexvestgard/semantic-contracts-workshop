@@ -36,7 +36,7 @@ def main():
     prompt = read_json(root / "prompts" / (args.stage + ".json"))
     lock = read_json("models/gemma.lock.json")
     database = Database(os.environ["EVAL_DSN"])
-    controls = {"questions_sha256": digest(questions), "database_sha256": database.fingerprint(),
+    controls = {"questions_sha256": digest(questions),
                 "model": lock["model"], "model_lock_sha256": digest(lock), "budget": budget,
                 "temperature": 0, "implementation_sha256": implementation_hash(),
                 "question_ids": [q["id"] for q in questions]}
@@ -59,8 +59,6 @@ def main():
             result = attempt(question, prompt, database, client, budget, record)
         write_json(out / (question["id"] + ".json"), result)
         print(f"{question['id']}: {result['status']}, {result['tool_calls']} calls, {result['elapsed_seconds']}s", flush=True)
-    if database.fingerprint() != controls["database_sha256"]:
-        raise RuntimeError("The database changed during the run; comparison is invalid.")
     manifest.update(complete=True, elapsed_seconds=round(time.monotonic() - start, 3))
     write_json(out / "manifest.json", manifest)
 

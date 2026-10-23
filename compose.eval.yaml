@@ -3,33 +3,6 @@ services:
     networks:
       - eval-network
 
-  eval-db:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_DB: museum_eval
-      POSTGRES_USER: eval_admin
-      POSTGRES_PASSWORD: eval_admin
-    volumes:
-      - eval-data:/var/lib/postgresql/data
-    networks: [eval-network]
-    healthcheck:
-      test: [CMD-SHELL, "pg_isready -U eval_admin -d museum_eval"]
-      interval: 2s
-      timeout: 3s
-      retries: 30
-
-  eval-seed:
-    build:
-      context: .
-      dockerfile: eval/Dockerfile
-      target: seed
-    depends_on:
-      eval-db:
-        condition: service_healthy
-    environment:
-      EVAL_ADMIN_DSN: postgresql://eval_admin:eval_admin@eval-db:5432/museum_eval
-    networks: [eval-network]
-
   eval-agent:
     profiles: [tools]
     build:
@@ -37,7 +10,7 @@ services:
       dockerfile: eval/Dockerfile
       target: runner
     environment:
-      EVAL_DSN: postgresql://eval_reader:eval_reader@eval-db:5432/museum_eval
+      EVAL_DSN: postgresql://eval_reader:eval_reader@workshop-db:5432/postgres
       MODEL_RUNNER_URL: http://model-runner:12434
     read_only: true
     cap_drop: [ALL]
@@ -53,16 +26,13 @@ services:
       dockerfile: eval/Dockerfile
       target: scorer
     environment:
-      EVAL_DSN: postgresql://eval_reader:eval_reader@eval-db:5432/museum_eval
+      EVAL_DSN: postgresql://eval_reader:eval_reader@workshop-db:5432/postgres
     read_only: true
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     mem_limit: 512m
     tmpfs: ["/tmp:size=16777216,noexec,nosuid"]
     networks: [eval-network]
-
-volumes:
-  eval-data:
 
 networks:
   eval-network:

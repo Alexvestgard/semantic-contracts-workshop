@@ -4,6 +4,7 @@
 import argparse
 from collections import Counter
 import hashlib
+import json
 import math
 import os
 from pathlib import Path
@@ -21,6 +22,40 @@ def compose(*args):
     command = [os.environ.get("DOCKER", "docker"), "compose", "-p", "workshop-sql-eval",
                "-f", str(ROOT / "compose.models.yaml"), "-f", str(ROOT / "compose.eval.yaml"), *map(str, args)]
     subprocess.run(command, cwd=ROOT, check=True)
+
+
+def workshop_database():
+    container = os.environ.get("SQL_EVAL_DB_CONTAINER")
+    if container:
+        return container
+    result = subprocess.run(
+        [os.environ.get("DOCKER", "docker"), "ps", "--filter",
+         "label=com.docker.compose.service=postgres", "--format", "{{.Names}}"],
+        check=True, capture_output=True, text=True)
+    containers = result.stdout.split()
+    if len(containers) != 1:
+        raise ValueError("Start the workshop database first. If several are running, set "
+                         "SQL_EVAL_DB_CONTAINER to its container name. Found: "
+                         + (", ".join(containers) or "none"))
+    return containers[0]
+
+
+def prepare_database():
+    container = workshop_database()
+    docker = os.environ.get("DOCKER", "docker")
+    result = subprocess.run([docker, "inspect", container], check=True, capture_output=True, text=True)
+    info = json.loads(result.stdout)[0]
+    if not info["State"]["Running"]:
+        raise ValueError("Start the workshop database before preparing eval access.")
+    # Use the existing schema and data; setup only grants the reader access.
+    subprocess.run([docker, "exec", "-i", container, "psql", "-U", "postgres", "-d", "postgres",
+                    "-v", "ON_ERROR_STOP=1", "--single-transaction"],
+                   input=(ROOT / "eval/read-only.sql").read_text(), text=True, check=True)
+    compose("create", "eval-scorer")
+    network = "workshop-sql-eval_eval-network"
+    if network not in info["NetworkSettings"]["Networks"]:
+        subprocess.run([docker, "network", "connect", "--alias", "workshop-db", network, container], check=True)
+    print(f"Eval uses the existing workshop database in {container} with read-only access.")
 
 
 def container_run(service, mounts, *args):
@@ -96,18 +131,20 @@ def compare_reports(paths):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["build", "start", "pilot", "freeze", "run", "score", "compare", "revert", "protect", "verify-gold", "isolation"])
+    parser.add_argument("action", choices=["build", "start", "prepare-db", "pilot", "freeze", "run", "score", "compare", "revert", "protect", "verify-gold", "isolation"])
     parser.add_argument("--stage", choices=["baseline", "improved", "regressed"], default="baseline")
     parser.add_argument("--artifacts", type=Path, default=ROOT / "artifacts/sql-eval")
     parser.add_argument("--prompt", type=Path)
     args = parser.parse_args()
     artifacts = args.artifacts.resolve()
     if args.action == "build":
-        compose("build", "eval-agent", "eval-scorer", "eval-seed")
+        compose("build", "eval-agent", "eval-scorer")
     elif args.action == "start":
-        compose("up", "-d", "eval-db", "eval-seed", "model-init")
-        compose("wait", "eval-seed")
+        prepare_database()
+        compose("up", "-d", "model-init")
         compose("wait", "model-init")
+    elif args.action == "prepare-db":
+        prepare_database()
     elif args.action in {"pilot", "run"}:
         pilot = args.action == "pilot"
         out = artifacts / ("pilot" if pilot else args.stage)
