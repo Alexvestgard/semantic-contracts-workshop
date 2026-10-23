@@ -4,6 +4,21 @@ The evaluation harness is implemented and locally tested. Workshop acceptance st
 requires the three scored runs in a fresh four-core, 16 GB Codespace. No baseline,
 improvement, or regression score is claimed in this record.
 
+## Result-value submissions
+
+The questions and expected values are unchanged. The agent now submits answer
+rows, and scoring compares those values directly without database or model calls.
+Reference-query validation remains a separate setup check. The pilot traces below
+predate this answer format and are retained unchanged; new model runs are required
+to evaluate it.
+
+Validation: 30 unit checks and five database integration checks passed. All 20
+reference queries still match the unchanged expected values. The rebuilt scorer
+ran twice with networking disabled and no database configuration; its reports
+were byte-identical. Controlled fixtures scored 20/20, then 18/20 after one wrong
+value and one malformed answer. These are harness checks, not Gemma scores.
+The rebuilt agent image also passed the gold-isolation check.
+
 ## PR #9 database simplification
 
 The eval now uses the existing workshop PostgreSQL database through `eval_reader`.

@@ -90,17 +90,14 @@ class ScoreTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             compare(reports)
 
-    def test_incorrect_gold_fails_before_scoring(self):
+    def test_reference_validation_rejects_incorrect_gold(self):
         class DB:
             def query(self, *args):
                 return {"rows": [[2]], "truncated": False}
         with self.assertRaises(ValueError):
             verify_gold(DB(), [{"id":"x", "ordered":False}], {"answers":{"x":{"sql":"SELECT 1", "expected":[[1]]}}})
 
-    def test_scorer_accepts_equivalent_sql_without_database_fingerprint(self):
-        class DB:
-            def query(self, sql, limit):
-                return {"rows": [[1]], "truncated": False}
+    def test_scorer_compares_outputs_without_database_or_model_calls(self):
         questions = [{"id":"q", "question":"Count", "ordered":False}]
         gold = {"answers":{"q":{"sql":"SELECT COUNT(*) FROM object", "expected":[[1]]}}}
         with tempfile.TemporaryDirectory() as directory:
@@ -109,15 +106,26 @@ class ScoreTests(unittest.TestCase):
                         "prompt":{"instructions":"Count artworks"}, "controls":{"questions":questions,
                         "question_ids":["q"]}}
             write_json(path / "manifest.json", manifest)
-            write_json(path / "q.json", {"id":"q","status":"submitted","sql":"SELECT COUNT(object_id) FROM object",
-                                        "tool_calls":1,"elapsed_seconds":1})
-            self.assertEqual(score_run(path, DB(), questions, gold)["correct"], 1)
+            answer = {"id":"q","status":"submitted","rows":[[1]],
+                      "tool_calls":1,"elapsed_seconds":1}
+            write_json(path / "q.json", answer)
+            with patch("sql_eval.score.Database", side_effect=AssertionError("Scoring must be offline")):
+                first = score_run(path, questions, gold)
+                self.assertEqual(first["correct"], 1)
+                self.assertEqual(score_run(path, questions, gold), first)
+                answer["rows"] = [[2]]
+                write_json(path / "q.json", answer)
+                self.assertEqual(score_run(path, questions, gold)["questions"][0]["status"], "wrong_result")
+                answer.pop("rows")
+                answer["sql"] = "SELECT COUNT(*) FROM object"
+                write_json(path / "q.json", answer)
+                self.assertEqual(score_run(path, questions, gold)["questions"][0]["status"], "invalid_answer")
 
     def test_incomplete_run_cannot_be_scored(self):
         with tempfile.TemporaryDirectory() as directory:
             write_json(Path(directory) / "manifest.json", {"pilot":False,"complete":False})
             with self.assertRaisesRegex(ValueError, "complete"):
-                score_run(directory, None, [], {})
+                score_run(directory, [], {})
 
 
 class ContractTests(unittest.TestCase):
@@ -156,6 +164,36 @@ class AgentTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 parse_action(action)
 
+    def test_final_action_requires_result_rows(self):
+        for rows in ([[1]], [["Asian Art", 2], ["Other", None]], []):
+            self.assertEqual(parse_action(json.dumps({"action":"final", "rows":rows}))["rows"], rows)
+        invalid = [None, 1, [1], [[]], [[1], [1, 2]], [[{}]], [[[1]]], [[float("nan")]]]
+        for rows in invalid:
+            with self.subTest(rows=rows), self.assertRaises(ValueError):
+                parse_action(json.dumps({"action":"final", "rows":rows}))
+        with self.assertRaises(ValueError):
+            parse_action('{"action":"final","sql":"SELECT 1"}')
+
+    def test_query_results_are_used_for_final_answer(self):
+        class DB:
+            def query(self, sql, limit):
+                return {"rows":[[7]], "truncated":False}
+        class Client:
+            config = {}
+            calls = 0
+            def complete(self, request, **kwargs):
+                self.calls += 1
+                if self.calls == 1:
+                    return {"answer":'{"action":"query","sql":"SELECT COUNT(*) FROM object"}'}
+                self_outer.assertIn('"rows": [[7]]', request)
+                return {"answer":'{"action":"final","rows":[[7]]}'}
+        self_outer = self
+        result = attempt({"id":"x","question":"Count"}, self.prompt, DB(), Client(), self.budget)
+        self.assertEqual(result["rows"], [[7]])
+        self.assertEqual(result["tool_calls"], 1)
+        self.assertEqual(result["events"][0]["action"]["sql"], "SELECT COUNT(*) FROM object")
+        self.assertEqual(result["status"], "submitted")
+
     def test_tool_budget_and_fresh_context(self):
         class Client:
             config = {}
@@ -180,19 +218,21 @@ class AgentTests(unittest.TestCase):
         class Client:
             config = {}
             def complete(self, *args, **kwargs):
-                return {"answer":'{"action":"final","sql":"SELECT 1"}',"finish_reason":"length"}
+                return {"answer":'{"action":"final","rows":[[1]]}',"finish_reason":"length"}
         result = attempt({"id":"x","question":"Count"}, self.prompt, None, Client(), self.budget)
-        self.assertIsNone(result["sql"])
+        self.assertIsNone(result["rows"])
         self.assertEqual(result["status"], "turn_limit")
 
     def test_submission_does_not_execute_scorer(self):
         class Client:
             config = {}
             def complete(self, *args, **kwargs):
-                return {"answer":'{"action":"final","sql":"SELECT COUNT(*) FROM object"}',"finish_reason":"stop"}
+                return {"answer":'{"action":"final","rows":[[3025]]}',"finish_reason":"stop"}
         result = attempt({"id":"x","question":"Count"}, self.prompt, None, Client(), self.budget)
         self.assertEqual(result["status"], "submitted")
         self.assertNotIn("correct", result)
+        self.assertEqual(result["rows"], [[3025]])
+        self.assertNotIn("sql", result)
 
     def test_incomplete_pilot_cannot_freeze_budget(self):
         with tempfile.TemporaryDirectory() as directory:

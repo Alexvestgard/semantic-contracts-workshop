@@ -63,8 +63,8 @@ python scripts/sql_eval.py freeze
 ```
 
 Freezing requires a completed pilot run, including any failed attempts. It records
-the outcome counts, sets the tool limit to the observed maximum plus three (at least six), and sets
-the question timeout to 1.5 times the slowest pilot (at least 60 seconds). Inspect
+the outcome counts, sets the tool limit to the observed maximum plus three (at least
+six), and sets the question timeout to 1.5 times the slowest pilot (at least 60 seconds). Inspect
 the pilot traces before accepting those limits. Timeouts and invalid SQL are useful
 failures; a perfect pilot is not required. Submission is not a correctness check.
 Limits are identical for all three scored runs.
@@ -99,15 +99,18 @@ are never scored. Existing output directories are not overwritten; use
 
 Read `artifacts/sql-eval/comparison.md` for scores and changed questions. Each stage
 has a manifest and one JSON trace per question: visible model response, action,
-tool result/error, token usage, final SQL, tool count, and elapsed time. No hidden
-reasoning is requested. Reports show SQL errors, timeouts, and wrong results.
+tool result/error, token usage, submitted answer rows, tool count, and elapsed time.
+SQL remains in query-tool traces. No hidden reasoning is requested. Reports show
+timeouts, invalid answers, and wrong results; query errors remain in the traces.
 
 All stages use fresh question contexts and the same model configuration, question
 order, decoding settings, and budget. These settings are recorded as readable values
 and compared directly. Keep the eval code and workshop data unchanged through
-all three runs and scoring; the eval does not fingerprint the database. The scorer
-still checks that reference queries agree with the expected answers, but this does
-not detect every possible data change. The comparison command rejects differing
+all three runs; the eval does not fingerprint the database. The separate
+`verify-gold` setup check confirms that reference queries agree with the expected
+answers, but does not detect every possible data change. Scoring reads saved
+answers and expected values without querying the database or calling a model.
+The comparison command rejects differing
 recorded controls. Temperature is zero; this does not
 guarantee deterministic CPU inference. Repeat paired questions before drawing a
 strong conclusion from a small score difference.
@@ -138,8 +141,8 @@ prompt uses `NULLIF(BTRIM(column), '')` because the dataset contains blank strin
 The semantic choices are typed declarations rendered into prompt sentences. The
 contract validates those declarations and compares the instructions directly with
 the approved text to block an unchecked contradictory edit. It does not infer the
-meaning of arbitrary rewrites or prove that Gemma obeys the rules. Review intentional instruction changes
-before updating the approved text. No contract-stage accuracy gain is claimed.
+meaning of arbitrary rewrites or prove that Gemma obeys the rules. Review intentional
+instruction changes before updating the approved text. No contract-stage accuracy gain is claimed.
 
 ## Questions and scoring
 
@@ -149,12 +152,22 @@ and joins. Every question specifies its result shape; ambiguous requirements are
 avoided in this first SQL-only exercise. Column comments remain available through
 the schema tool in every stage.
 
-The scorer compares actual result rows with source-derived expected rows, preserving
-duplicates and NULLs. It enforces row order when requested and always preserves
-column position. Column aliases are not scored. The current cases return text and
-integer counts; there is no floating-point tolerance rule. Equivalent SQL is accepted
-when it produces the expected result. Matching one data snapshot does not prove a
-query is correct for every future dataset.
+The agent submits result values in a final action. For example, a count of 42 is
+`{"action":"final","rows":[[42]]}`. Multiple columns occupy one row in the order the
+question requests; multiple results occupy separate rows. Do not include column
+headers. Use `[]` for no results and JSON `null` for SQL NULL.
+
+The scorer compares submitted rows directly with source-derived expected rows.
+This check is deterministic for the same answer files and expected values; it
+executes no submitted SQL and uses no model judge. It preserves duplicates, NULLs,
+and column positions, and enforces row order when requested. Numeric values such
+as `1` and `1.0` compare equally; text `"1"` and boolean `true` do not equal numeric
+`1`. The current cases return text and integer counts; there is no floating-point
+tolerance rule. A correct query in a trace cannot compensate for an incorrect
+submitted answer. Missing or malformed rows receive `invalid_answer`.
+
+Older runs that submitted SQL must be rerun with this answer format. Preserve
+those traces as historical evidence; do not convert them into model answers.
 
 Reference SQL and expected results live in `eval/gold/answers.json`. Expected results
 were calculated independently from the checked-in JSON, then checked against all
