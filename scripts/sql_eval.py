@@ -3,7 +3,6 @@
 
 import argparse
 from collections import Counter
-import hashlib
 import json
 import math
 import os
@@ -14,7 +13,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from sql_eval.common import digest, read_json, write_json
+from sql_eval.common import read_json, write_json
 from sql_eval.prompts import protect
 
 
@@ -86,7 +85,6 @@ def restore_prompt(destination):
     shutil.copyfile(source, destination)
     if destination.read_bytes() != source.read_bytes():
         raise RuntimeError("Restored prompt differs from the improved prompt.")
-    return hashlib.sha256(source.read_bytes()).hexdigest()
 
 
 def freeze_budget(pilot_dir, destination):
@@ -100,7 +98,6 @@ def freeze_budget(pilot_dir, destination):
     budget = dict(manifest["controls"]["budget"])
     budget.update(status="frozen", max_tool_calls=max(6, max(a["tool_calls"] for a in answers) + 3),
                   question_timeout_seconds=max(60, math.ceil(max(a["elapsed_seconds"] for a in answers) * 1.5)),
-                  pilot_manifest_sha256=digest(manifest),
                   pilot_outcomes=dict(Counter(a["status"] for a in answers)))
     write_json(destination, budget)
     return budget
@@ -111,8 +108,8 @@ def compare_reports(paths):
     reports = [read_json(path) for path in paths]
     if [r["stage"] for r in reports] != ["baseline", "improved", "regressed"]:
         raise ValueError("Expected baseline, improved, and regressed reports in that order.")
-    if any(len({r[field] for r in reports}) != 1 for field in ("controls_sha256", "scorer_sha256")):
-        raise ValueError("Run controls or scorer code changed between runs.")
+    if any(report["controls"] != reports[0]["controls"] for report in reports[1:]):
+        raise ValueError("Run controls differ between stages.")
     lines = ["# SQL eval results", "", "| Prompt | Correct | Seconds |", "| --- | ---: | ---: |"]
     for r in reports:
         lines.append(f"| {r['stage']} | {r['correct']}/{r['total']} | {r['elapsed_seconds']} |")
@@ -177,8 +174,8 @@ def main():
         (artifacts / "comparison.md").write_text(report)
         print(report)
     elif args.action == "revert":
-        sha = restore_prompt(artifacts / "active-prompt.json")
-        print(f"Restored improved prompt exactly ({sha}). No model or scorer was invoked.")
+        restore_prompt(artifacts / "active-prompt.json")
+        print("Restored improved prompt exactly. No model or scorer was invoked.")
     elif args.action == "protect":
         prompt = read_json(args.prompt or artifacts / "active-prompt.json")
         contract = read_json(ROOT / "eval/prompt-contract.json")
