@@ -1,0 +1,39 @@
+services:
+  model-runner:
+    networks:
+      - eval-network
+
+  eval-agent:
+    profiles: [tools]
+    build:
+      context: .
+      dockerfile: eval/Dockerfile
+      target: runner
+    environment:
+      EVAL_DSN: postgresql://eval_reader:eval_reader@workshop-db:5432/postgres
+      MODEL_RUNNER_URL: http://model-runner:12434
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    pids_limit: 64
+    networks: [eval-network]
+
+  eval-scorer:
+    profiles: [tools]
+    build:
+      context: .
+      dockerfile: eval/Dockerfile
+      target: scorer
+    environment:
+      EVAL_DSN: postgresql://eval_reader:eval_reader@workshop-db:5432/postgres
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    tmpfs: ["/tmp:size=16777216,noexec,nosuid"]
+    networks: [eval-network]
+
+networks:
+  eval-network:
+    internal: true
