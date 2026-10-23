@@ -1,5 +1,10 @@
 # Semantic contracts workshop: review proposal
 
+> **23 October rehearsal scope:** Mark requested five questions for his next
+> Codespaces run. The `codex/five-question-codespaces` branch selects q01–q05 for
+> all three prompts (15 scored attempts), retaining the full question bank and
+> separate pilots. See [the run instructions](codespaces-five-question-eval.md).
+
 > **22 October decision update:** The AI exercise now uses 20 SQL questions and
 > three scored stages: baseline → prompt improvement → prompt regression. Restore
 > the improved prompt, then protect its semantic requirements; neither final step

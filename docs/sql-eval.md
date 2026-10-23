@@ -3,15 +3,25 @@
 This exercise uses the existing museum sample and Gemma 4 E2B Q4_K_M in Docker
 Model Runner. It teaches a five-step sequence:
 
-1. Run a baseline prompt on 20 questions.
+1. Run a baseline prompt on five questions.
 2. Improve the prompt and run the same evaluation.
 3. Make a plausible prompt change and use the evaluation to detect a regression.
 4. Restore the exact improved prompt without another evaluation.
 5. Protect the restored prompt with semantic contracts, without another evaluation.
 
-The three scored stages produce 60 attempts. The desired improvement and regression
+The three scored stages produce 15 attempts. This branch selects q01–q05 through
+`eval/question-set.json`: total artworks, populated artist names, missing artist
+names, public-domain artworks, and populated image URLs. The full 20-question bank
+and reference answers remain unchanged. The desired improvement and regression
 are rehearsal goals, not guaranteed scores. Retain every result, including no change.
 The question set is a teaching diagnostic, not a general model benchmark.
+
+The local ARM64 rehearsal took about 49 minutes for these five questions across
+all three prompts, plus nine minutes for pilots and additional setup time.
+Codespaces timing is unmeasured. Reducing the question count does not fix the
+observed schema loops or guarantee the intended score pattern.
+
+For a copyable command sequence, see [the five-question Codespaces run](codespaces-five-question-eval.md).
 
 ## Setup in Codespaces
 
@@ -55,7 +65,7 @@ The Codespaces walkthrough must be checked on native AMD64 before workshop accep
 ## Time pilots, then freeze the limits
 
 Three separate pilot questions establish a starting tool/time budget. They are
-excluded from the 20 scored questions. Run the improved prompt for the pilot:
+excluded from the five scored questions. Run the improved prompt for the pilot:
 
 ```sh
 python scripts/sql_eval.py pilot --stage improved
@@ -146,7 +156,8 @@ instruction changes before updating the approved text. No contract-stage accurac
 
 ## Questions and scoring
 
-`eval/questions.json` contains ten basic and ten intermediate questions. They cover
+`eval/questions.json` retains ten basic and ten intermediate questions; this branch
+selects the first five basic questions for every scored stage. The full bank covers
 counts, missing text, public-domain flags, departments, sorting, distinct values,
 and joins. Every question specifies its result shape; ambiguous requirements are
 avoided in this first SQL-only exercise. Column comments remain available through

@@ -8,13 +8,58 @@ import unittest
 from unittest.mock import patch
 
 from sql_eval.agent import attempt, parse_action
-from sql_eval.common import read_json, write_json
+from sql_eval.common import read_json, select_questions, write_json
+from sql_eval.run import main as run_main
 from sql_eval.database import validate_sql
 from sql_eval.prompts import protect
 from sql_eval.score import compare, equal_rows, score_run, verify_gold
-from scripts.sql_eval import container_run, freeze_budget, host_path, restore_prompt, workshop_database
+from scripts.sql_eval import compare_reports, container_run, freeze_budget, host_path, restore_prompt, workshop_database
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+class QuestionSetTests(unittest.TestCase):
+    def test_selection_rejects_unknown_duplicate_or_empty_ids(self):
+        bank = read_json(ROOT / "eval/questions.json")
+        for ids in ([], ["q01", "q01"], ["missing"]):
+            with self.assertRaises(ValueError):
+                select_questions(bank, ids)
+
+    def test_three_stages_run_and_score_only_the_selected_five(self):
+        bank = read_json(ROOT / "eval/questions.json")
+        ids = read_json(ROOT / "eval/question-set.json")
+        self.assertEqual(ids, [f"q{i:02}" for i in range(1, 6)])
+        questions = select_questions(bank, ids)
+        references = read_json(ROOT / "eval/gold/answers.json")
+        gold = {"answers": {qid: references["answers"][qid] for qid in ids}}
+        self.assertEqual(len(bank), 20)
+
+        def fake_attempt(question, *args):
+            return {"id": question["id"], "status": "submitted", "rows": [[0]],
+                    "tool_calls": 0, "elapsed_seconds": 0, "events": []}
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            budget = read_json(ROOT / "eval/pilot-budget.json")
+            budget["status"] = "frozen"
+            write_json(root / "budget.json", budget)
+            reports = []
+            for stage in ("baseline", "improved", "regressed"):
+                out = root / stage
+                argv = ["run", "--stage", stage, "--budget", str(root / "budget.json"), "--out", str(out)]
+                with patch("sys.argv", argv), patch.dict("os.environ", {"EVAL_DSN": "unused"}), \
+                     patch("sql_eval.run.Database"), patch("sql_eval.run.attempt", side_effect=fake_attempt) as attempt:
+                    run_main()
+                self.assertEqual([call.args[0]["id"] for call in attempt.call_args_list], ids)
+                self.assertEqual(sorted(p.stem for p in out.glob("q*.json")), ids)
+                report = score_run(out, questions, gold)
+                self.assertEqual(report["total"], 5)
+                report_path = root / (stage + ".json")
+                write_json(report_path, report)
+                reports.append(report_path)
+            self.assertIn("These 5 questions", compare_reports(reports))
+            with self.assertRaisesRegex(ValueError, "Question set changed"):
+                score_run(root / "baseline", bank, references)
 
 
 class ContainerTests(unittest.TestCase):

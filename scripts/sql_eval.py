@@ -122,7 +122,7 @@ def compare_reports(paths):
                   "Regressed: " + (", ".join(broken) or "none") + "."]
     observed = reports[1]["correct"] > reports[0]["correct"] and reports[2]["correct"] < reports[1]["correct"]
     lines += ["", "Improvement then regression observed: " + ("yes." if observed else "no; revise the rehearsal, not the scores."),
-              "", "These 20 questions are a teaching diagnostic. One run does not establish a reliable capability difference."]
+              "", f"These {reports[0]['total']} questions are a teaching diagnostic. One run does not establish a reliable capability difference."]
     return "\n".join(lines) + "\n"
 
 

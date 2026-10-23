@@ -19,7 +19,7 @@ if not DEFAULT_LOCK.exists():
 class ModelClient:
     def __init__(self, base_url, config):
         self.base_url = base_url.rstrip("/")
-        self.config = config
+        self.config = dict(config)
         self.model = config["model"]
         self.model_path = "/models/" + urllib.parse.quote(self.model, safe="/")
 

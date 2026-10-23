@@ -78,6 +78,16 @@ class StartupGateTests(unittest.TestCase):
                 self.client.initialize()
         self.assertNotIn("model_ready", self.output.getvalue())
 
+    def test_request_deadline_preserves_recorded_model_configuration(self):
+        recorded_config = dict(CONFIG)
+        client = ModelClient("http://runner", recorded_config)
+        client.config["request_timeout_seconds"] = 1.25
+        response = {"choices": [{"message": {"content": "READY"}, "finish_reason": "stop"}]}
+        with patch.object(client, "json_request", return_value=response) as request:
+            client.complete("test")
+        self.assertEqual(request.call_args.kwargs["timeout"], 1.25)
+        self.assertEqual(recorded_config, CONFIG)
+
 
 if __name__ == "__main__":
     unittest.main()

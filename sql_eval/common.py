@@ -37,6 +37,14 @@ def read_json(path):
     return json.loads(Path(path).read_text())
 
 
+def select_questions(questions, ids):
+    """Select a fixed, ordered subset of the public question bank."""
+    bank = {q["id"]: q for q in questions}
+    if not ids or len(ids) != len(set(ids)) or any(qid not in bank for qid in ids):
+        raise ValueError("Question selection must contain unique IDs from the question bank.")
+    return [bank[qid] for qid in ids]
+
+
 def write_json(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)

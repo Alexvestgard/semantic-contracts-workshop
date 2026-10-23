@@ -7,7 +7,7 @@ import sys
 import time
 
 from .agent import attempt
-from .common import dumps, read_json, write_json
+from .common import dumps, read_json, select_questions, write_json
 from .database import Database
 
 from scripts.model_client import ModelClient
@@ -22,6 +22,8 @@ def main():
     args = parser.parse_args()
     root = Path("eval")
     questions = read_json(root / ("pilots.json" if args.pilot else "questions.json"))
+    if not args.pilot:
+        questions = select_questions(questions, read_json(root / "question-set.json"))
     budget = read_json(args.budget)
     if not args.pilot and budget.get("status") != "frozen":
         parser.error("Time pilots and freeze their budget before a scored run.")
