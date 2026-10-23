@@ -3,11 +3,10 @@
 import argparse
 from collections import Counter
 from decimal import Decimal
-import hashlib
 import os
 from pathlib import Path
 
-from .common import digest, dumps, read_json, write_json
+from .common import dumps, read_json, write_json
 from .database import Database
 
 
@@ -38,7 +37,7 @@ def score_run(path, database, questions, gold):
     if manifest.get("pilot") or not manifest.get("complete"):
         raise ValueError("Only complete non-pilot runs can be scored.")
     controls = manifest["controls"]
-    if controls["questions_sha256"] != digest(questions):
+    if controls["questions"] != questions:
         raise ValueError("Question set changed after the run.")
     if controls["question_ids"] != [q["id"] for q in questions]:
         raise ValueError("Question order differs from the frozen manifest.")
@@ -61,17 +60,15 @@ def score_run(path, database, questions, gold):
         scores.append(item)
     return {"stage": manifest["stage"], "correct": sum(s["correct"] for s in scores),
             "total": len(scores), "elapsed_seconds": manifest["elapsed_seconds"],
-            "controls_sha256": digest(controls), "prompt_sha256": manifest["prompt_sha256"],
-            "scorer_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            "controls": controls, "prompt": manifest["prompt"],
             "questions": scores}
 
 
 def compare(reports):
     if [r["stage"] for r in reports] != ["baseline", "improved", "regressed"]:
         raise ValueError("Provide baseline, improved, and regressed reports in order.")
-    for field in ("controls_sha256", "scorer_sha256"):
-        if len({r[field] for r in reports}) != 1:
-            raise ValueError(f"Incomparable runs: {field} differs.")
+    if any(report["controls"] != reports[0]["controls"] for report in reports[1:]):
+        raise ValueError("Run controls differ between stages.")
     changes = []
     for previous, current in zip(reports, reports[1:]):
         before = {q["id"]: q["correct"] for q in previous["questions"]}

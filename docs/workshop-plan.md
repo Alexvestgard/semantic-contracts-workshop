@@ -11,6 +11,8 @@
 > **PR #9 review decision:** Reuse the existing workshop database and remove
 > database fingerprinting. Keep its data unchanged during the three scored stages;
 > the eval adds read-only access and does not run a separate seed process.
+> Eval metadata uses readable values and direct comparisons; SHA fields and hash
+> checks are omitted.
 
 Documentation-only proposal · 20 October 2026
 

@@ -1,6 +1,5 @@
-"""Stable serialization and artifact identities."""
+"""JSON serialization for eval inputs and results."""
 
-import hashlib
 import json
 from datetime import date, datetime
 from decimal import Decimal
@@ -17,10 +16,6 @@ def json_value(value):
 
 def dumps(value):
     return json.dumps(value, sort_keys=True, ensure_ascii=False, default=json_value)
-
-
-def digest(value):
-    return hashlib.sha256(dumps(value).encode()).hexdigest()
 
 
 def read_json(path):

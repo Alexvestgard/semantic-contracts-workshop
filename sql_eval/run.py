@@ -1,24 +1,16 @@
 """Run one prompt stage without loading reference answers or a scorer."""
 
 import argparse
-import hashlib
 import os
 from pathlib import Path
 import sys
 import time
 
 from .agent import attempt
-from .common import digest, dumps, read_json, write_json
+from .common import dumps, read_json, write_json
 from .database import Database
 
 from scripts.model_client import ModelClient
-
-
-def implementation_hash():
-    paths = [Path(__file__).with_name(name) for name in
-             ("agent.py", "database.py", "common.py", "prompts.py", "run.py")]
-    paths.append(Path(ModelClient.__module__.replace(".", "/") + ".py"))
-    return digest([hashlib.sha256(p.read_bytes()).hexdigest() for p in paths])
 
 
 def main():
@@ -36,16 +28,14 @@ def main():
     prompt = read_json(root / "prompts" / (args.stage + ".json"))
     lock = read_json("models/gemma.lock.json")
     database = Database(os.environ["EVAL_DSN"])
-    controls = {"questions_sha256": digest(questions),
-                "model": lock["model"], "model_lock_sha256": digest(lock), "budget": budget,
-                "temperature": 0, "implementation_sha256": implementation_hash(),
-                "question_ids": [q["id"] for q in questions]}
+    controls = {"questions": questions, "model_config": lock, "budget": budget,
+                "temperature": 0, "question_ids": [q["id"] for q in questions]}
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     if any(out.iterdir()):
         parser.error("Output directory must be empty; preserve previous run evidence.")
     manifest = {"stage": args.stage, "pilot": args.pilot, "controls": controls,
-                "prompt_sha256": digest(prompt), "complete": False}
+                "prompt": prompt, "complete": False}
     write_json(out / "manifest.json", manifest)
     client = ModelClient(os.environ.get("MODEL_RUNNER_URL", "http://model-runner:12434"), lock)
     start = time.monotonic()

@@ -63,8 +63,7 @@ python scripts/sql_eval.py freeze
 ```
 
 Freezing requires a completed pilot run, including any failed attempts. It records
-the pilot manifest hash and outcome counts,
-sets the tool limit to the observed maximum plus three (at least six), and sets
+the outcome counts, sets the tool limit to the observed maximum plus three (at least six), and sets
 the question timeout to 1.5 times the slowest pilot (at least 60 seconds). Inspect
 the pilot traces before accepting those limits. Timeouts and invalid SQL are useful
 failures; a perfect pilot is not required. Submission is not a correctness check.
@@ -103,12 +102,13 @@ has a manifest and one JSON trace per question: visible model response, action,
 tool result/error, token usage, final SQL, tool count, and elapsed time. No hidden
 reasoning is requested. Reports show SQL errors, timeouts, and wrong results.
 
-All stages use fresh question contexts and the same model digest, question order,
-decoding settings, code hash, and budget. Keep the workshop data unchanged through
+All stages use fresh question contexts and the same model configuration, question
+order, decoding settings, and budget. These settings are recorded as readable values
+and compared directly. Keep the eval code and workshop data unchanged through
 all three runs and scoring; the eval does not fingerprint the database. The scorer
 still checks that reference queries agree with the expected answers, but this does
 not detect every possible data change. The comparison command rejects differing
-recorded controls or scorer code. Temperature is zero; this does not
+recorded controls. Temperature is zero; this does not
 guarantee deterministic CPU inference. Repeat paired questions before drawing a
 strong conclusion from a small score difference.
 
@@ -136,10 +136,10 @@ setting to a common SQL shortcut: treating `IS NOT NULL` as “populated.” The
 prompt uses `NULLIF(BTRIM(column), '')` because the dataset contains blank strings.
 
 The semantic choices are typed declarations rendered into prompt sentences. The
-contract validates those declarations and hashes the approved free-text instructions
-to block an unchecked contradictory edit. It does not infer the meaning of arbitrary
-rewrites or prove that Gemma obeys the rules. Review intentional instruction changes
-before updating the approved hash. No contract-stage accuracy gain is claimed.
+contract validates those declarations and compares the instructions directly with
+the approved text to block an unchecked contradictory edit. It does not infer the
+meaning of arbitrary rewrites or prove that Gemma obeys the rules. Review intentional instruction changes
+before updating the approved text. No contract-stage accuracy gain is claimed.
 
 ## Questions and scoring
 

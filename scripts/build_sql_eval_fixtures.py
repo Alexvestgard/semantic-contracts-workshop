@@ -1,5 +1,5 @@
 """Regenerate draft questions, independent answers, and prompts before freezing a run."""
-import json, hashlib
+import json
 from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 data = root / 'data_contract_components/data_assets/db_migrations/raw_data/objects.json'
@@ -50,8 +50,6 @@ regressed['semantics']['missing_text'] = 'null_only'
 for name, v in [('baseline', base), ('improved', improved), ('regressed', regressed)]:
     write('eval/prompts/' + name + '.json', v)
 
-def digest(v):
-    return hashlib.sha256(json.dumps(v, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-write('eval/prompt-contract.json', {'version': 1, 'required_semantics': improved['semantics'], 'approved_instructions_sha256': digest(improved['instructions']), 'scope': 'Checks declared semantic settings and approved free-text instructions; does not prove model compliance.'})
+write('eval/prompt-contract.json', {'version': 1, 'required_semantics': improved['semantics'], 'scope': 'Checks declared semantic settings and approved free-text instructions; does not prove model compliance.', 'approved_instructions': improved['instructions']})
 write('eval/pilot-budget.json', {'status': 'pilot', 'max_tool_calls': 12, 'question_timeout_seconds': 180, 'request_timeout_seconds': 45, 'max_output_tokens': 384, 'tool_row_limit': 20, 'history_characters': 6500, 'observation_characters': 3000})
 print('20 questions, 3 pilots, 3 prompt versions; reference answers calculated from source JSON')

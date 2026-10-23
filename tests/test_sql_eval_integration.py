@@ -8,7 +8,7 @@ import unittest
 import psycopg
 
 from sql_eval.database import Database
-from sql_eval.common import digest, read_json, write_json
+from sql_eval.common import read_json, write_json
 from sql_eval.score import score_run
 
 
@@ -56,8 +56,8 @@ class DatabaseIntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)
             manifest = {"complete":True,"pilot":False,"stage":"baseline","elapsed_seconds":0,
-                        "prompt_sha256":"integration-fixture-not-a-model-run", "controls":{
-                            "questions_sha256":digest(questions), "question_ids":[q["id"] for q in questions]}}
+                        "prompt":{"instructions":"Integration fixture; not a model run"}, "controls":{
+                            "questions":questions, "question_ids":[q["id"] for q in questions]}}
             write_json(path / "manifest.json", manifest)
             for question in questions:
                 write_json(path / (question["id"] + ".json"), {"id":question["id"], "status":"submitted",
