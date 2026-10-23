@@ -9,7 +9,7 @@ import psycopg
 
 from sql_eval.database import Database
 from sql_eval.common import read_json, write_json
-from sql_eval.score import score_run
+from sql_eval.score import score_run, verify_gold
 
 
 @unittest.skipUnless(os.environ.get("EVAL_TEST_DSN"), "Set EVAL_TEST_DSN for the database checks.")
@@ -53,6 +53,7 @@ class DatabaseIntegrationTests(unittest.TestCase):
     def test_scorer_checks_all_twenty_and_detects_changed_answers(self):
         questions = read_json("eval/questions.json")
         gold = read_json("eval/gold/answers.json")
+        verify_gold(self.db, questions, gold)
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)
             manifest = {"complete":True,"pilot":False,"stage":"baseline","elapsed_seconds":0,
@@ -61,18 +62,18 @@ class DatabaseIntegrationTests(unittest.TestCase):
             write_json(path / "manifest.json", manifest)
             for question in questions:
                 write_json(path / (question["id"] + ".json"), {"id":question["id"], "status":"submitted",
-                           "sql":gold["answers"][question["id"]]["sql"], "tool_calls":0,"elapsed_seconds":0})
-            self.assertEqual(score_run(path, self.db, questions, gold)["correct"], 20)
+                           "rows":gold["answers"][question["id"]]["expected"], "tool_calls":0,"elapsed_seconds":0})
+            self.assertEqual(score_run(path, questions, gold)["correct"], 20)
             answer = read_json(path / "q01.json")
-            answer["sql"] = "SELECT 0"
+            answer["rows"] = [[0]]
             write_json(path / "q01.json", answer)
             answer = read_json(path / "q02.json")
-            answer["sql"] = "DELETE FROM object"
+            answer["rows"] = "SELECT COUNT(*) FROM object"
             write_json(path / "q02.json", answer)
-            report = score_run(path, self.db, questions, gold)
+            report = score_run(path, questions, gold)
             self.assertEqual(report["correct"], 18)
             self.assertEqual(report["questions"][0]["status"], "wrong_result")
-            self.assertEqual(report["questions"][1]["status"], "sql_error")
+            self.assertEqual(report["questions"][1]["status"], "invalid_answer")
 
 
 if __name__ == "__main__":

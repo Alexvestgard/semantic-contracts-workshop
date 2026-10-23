@@ -13,6 +13,11 @@
 > the eval adds read-only access and does not run a separate seed process.
 > Eval metadata uses readable values and direct comparisons; SHA fields and hash
 > checks are omitted.
+>
+> **Answer-format decision:** Keep the 20 questions. The agent submits result
+> values as rows; scoring compares them directly with expected values without
+> database queries or a model judge. SQL remains a database tool input and trace
+> detail. Reference-query validation is a separate setup check.
 
 Documentation-only proposal · 20 October 2026
 
