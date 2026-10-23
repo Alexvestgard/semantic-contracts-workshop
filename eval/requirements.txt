@@ -1,8 +1,2 @@
 psycopg[binary]==3.2.10
-pglast==7.21
-alembic==1.16.5
-psycopg_pool==3.2.6
-SQLAlchemy==2.1.6
-Mako==1.4.3
-MarkupSafe==3.0.4
-typing-extensions==4.16.0
+sqlglot==30.24.0

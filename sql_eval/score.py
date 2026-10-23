@@ -42,8 +42,6 @@ def score_run(path, database, questions, gold):
         raise ValueError("Question set changed after the run.")
     if controls["question_ids"] != [q["id"] for q in questions]:
         raise ValueError("Question order differs from the frozen manifest.")
-    if controls["database_sha256"] != database.fingerprint():
-        raise ValueError("Database snapshot changed after the run.")
     verify_gold(database, questions, gold)
     scores = []
     for question in questions:

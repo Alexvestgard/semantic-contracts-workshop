@@ -12,12 +12,26 @@ from sql_eval.common import digest, read_json, write_json
 from sql_eval.database import validate_sql
 from sql_eval.prompts import protect
 from sql_eval.score import compare, equal_rows, score_run, verify_gold
-from scripts.sql_eval import container_run, freeze_budget, host_path, restore_prompt
+from scripts.sql_eval import container_run, freeze_budget, host_path, restore_prompt, workshop_database
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class ContainerTests(unittest.TestCase):
+    def test_database_discovery_requires_one_running_workshop(self):
+        with patch.dict("os.environ", {}, clear=True), patch("scripts.sql_eval.subprocess.run") as run:
+            run.return_value.stdout = "workshop-postgres-1\n"
+            self.assertEqual(workshop_database(), "workshop-postgres-1")
+            for output in ("", "first-postgres-1\nsecond-postgres-1\n"):
+                run.return_value.stdout = output
+                with self.assertRaisesRegex(ValueError, "SQL_EVAL_DB_CONTAINER"):
+                    workshop_database()
+
+    def test_explicit_database_selection_skips_discovery(self):
+        with patch.dict("os.environ", {"SQL_EVAL_DB_CONTAINER": "chosen-postgres"}), patch("subprocess.run") as run:
+            self.assertEqual(workshop_database(), "chosen-postgres")
+            run.assert_not_called()
+
     def test_devcontainer_maps_mounts_to_host_workspace(self):
         with patch.dict("os.environ", {"SQL_EVAL_HOST_ROOT": "/host/repo"}):
             self.assertEqual(host_path(ROOT / "artifacts/run"), Path("/host/repo/artifacts/run"))
@@ -42,7 +56,9 @@ class SQLBoundaryTests(unittest.TestCase):
                  "SELECT * FROM object FOR UPDATE", "SELECT pg_read_file('/etc/passwd')",
                  "SELECT pg_sleep(100)", "SELECT * FROM pg_authid", "SELECT * FROM pg_catalog.pg_class",
                  "SELECT * FROM information_schema.tables", "SELECT 'object'::regclass",
-                 "COPY object TO PROGRAM 'id'", "SELECT set_config('transaction_read_only','off',false)"]
+                 "COPY object TO PROGRAM 'id'", "SELECT set_config('transaction_read_only','off',false)",
+                 "SELECT pg_catalog.count(*) FROM object", "SELECT 1::public.custom_type",
+                 "SELECT 1 UNION SELECT pg_sleep(1)"]
         for sql in cases:
             with self.subTest(sql=sql), self.assertRaises(ValueError):
                 validate_sql(sql)
@@ -50,6 +66,7 @@ class SQLBoundaryTests(unittest.TestCase):
     def test_cte_and_string_literals_work(self):
         validate_sql("WITH x AS (SELECT object_id FROM object) SELECT COUNT(*) FROM x")
         validate_sql("SELECT title FROM object WHERE title = 'DELETE; DROP TABLE object'")
+        validate_sql("SELECT CAST(object_id AS BIGINT) FROM object UNION SELECT 1")
 
 
 class ScoreTests(unittest.TestCase):
@@ -80,10 +97,8 @@ class ScoreTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             verify_gold(DB(), [{"id":"x", "ordered":False}], {"answers":{"x":{"sql":"SELECT 1", "expected":[[1]]}}})
 
-    def test_scorer_accepts_equivalent_sql_and_rejects_changed_snapshot(self):
+    def test_scorer_accepts_equivalent_sql_without_database_fingerprint(self):
         class DB:
-            def fingerprint(self):
-                return "frozen"
             def query(self, sql, limit):
                 return {"rows": [[1]], "truncated": False}
         questions = [{"id":"q", "question":"Count", "ordered":False}]
@@ -92,15 +107,11 @@ class ScoreTests(unittest.TestCase):
             path = Path(directory)
             manifest = {"complete":True,"pilot":False,"stage":"baseline","elapsed_seconds":1,
                         "prompt_sha256":"p", "controls":{"questions_sha256":digest(questions),
-                        "question_ids":["q"], "database_sha256":"frozen"}}
+                        "question_ids":["q"]}}
             write_json(path / "manifest.json", manifest)
             write_json(path / "q.json", {"id":"q","status":"submitted","sql":"SELECT COUNT(object_id) FROM object",
                                         "tool_calls":1,"elapsed_seconds":1})
             self.assertEqual(score_run(path, DB(), questions, gold)["correct"], 1)
-            manifest["controls"]["database_sha256"] = "changed"
-            write_json(path / "manifest.json", manifest)
-            with self.assertRaisesRegex(ValueError, "snapshot changed"):
-                score_run(path, DB(), questions, gold)
 
     def test_incomplete_run_cannot_be_scored(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -4,11 +4,6 @@ COPY eval/requirements.txt /requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
-FROM base AS seed
-COPY sql_eval/__init__.py sql_eval/seed.py /app/sql_eval/
-COPY data_contract_components/data_assets /seed
-CMD ["python", "-m", "sql_eval.seed"]
-
 FROM base AS runner
 COPY sql_eval/__init__.py sql_eval/common.py sql_eval/database.py sql_eval/prompts.py sql_eval/agent.py sql_eval/run.py /app/sql_eval/
 COPY scripts/model_client.py /app/scripts/model_client.py
