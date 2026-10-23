@@ -64,10 +64,6 @@ Though these are prerequisites, please note that we will provide technical instr
 
 # 💻 Installation and Setup
 
-For the Gemma SQL exercise—baseline, prompt improvement, regression, revert, and
-semantic contract protection—see [the SQL eval guide](docs/sql-eval.md) and
-[the 20 questions](docs/sql-eval-questions.md).
-
 This tutorial expects you to create pull requests, especially around the CI/CD components for contract violation detection and alerting. Thus, we strongly encourage first forking the repo
 
 From there you have two options: 1) running the environment via GitHub codespaces (easiest), or cloning the repo and running via Docker and VS Code dev container (more control).
