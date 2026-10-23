@@ -1,4 +1,4 @@
-"""Compare final query results after the agent container has exited."""
+"""Compare submitted answer values after the agent container has exited."""
 
 import argparse
 from collections import Counter
@@ -6,7 +6,7 @@ from decimal import Decimal
 import os
 from pathlib import Path
 
-from .common import dumps, read_json, write_json
+from .common import dumps, read_json, validate_rows, write_json
 from .database import Database
 
 
@@ -31,7 +31,7 @@ def verify_gold(database, questions, gold):
             raise ValueError(f"Reference SQL disagrees with source-derived answers: {question['id']}")
 
 
-def score_run(path, database, questions, gold):
+def score_run(path, questions, gold):
     path = Path(path)
     manifest = read_json(path / "manifest.json")
     if manifest.get("pilot") or not manifest.get("complete"):
@@ -41,7 +41,8 @@ def score_run(path, database, questions, gold):
         raise ValueError("Question set changed after the run.")
     if controls["question_ids"] != [q["id"] for q in questions]:
         raise ValueError("Question order differs from the frozen manifest.")
-    verify_gold(database, questions, gold)
+    if {q["id"] for q in questions} != set(gold["answers"]):
+        raise ValueError("Question and reference IDs differ.")
     scores = []
     for question in questions:
         answer = read_json(path / (question["id"] + ".json"))
@@ -51,12 +52,13 @@ def score_run(path, database, questions, gold):
                 "tool_calls": answer["tool_calls"], "elapsed_seconds": answer["elapsed_seconds"]}
         if answer["status"] == "submitted":
             try:
-                actual = database.query(answer["sql"], 5000)
-                item["correct"] = not actual["truncated"] and equal_rows(
-                    actual["rows"], gold["answers"][question["id"]]["expected"], question["ordered"])
+                actual = answer.get("rows")
+                validate_rows(actual)
+                item["correct"] = equal_rows(
+                    actual, gold["answers"][question["id"]]["expected"], question["ordered"])
                 item["status"] = "correct" if item["correct"] else "wrong_result"
-            except Exception as error:
-                item.update(status="sql_error", error=str(error)[:600])
+            except ValueError as error:
+                item.update(status="invalid_answer", error=str(error)[:600])
         scores.append(item)
     return {"stage": manifest["stage"], "correct": sum(s["correct"] for s in scores),
             "total": len(scores), "elapsed_seconds": manifest["elapsed_seconds"],
@@ -87,13 +89,13 @@ def main():
     parser.add_argument("--out", default="/reports/report.json")
     parser.add_argument("--verify-gold", action="store_true")
     args = parser.parse_args()
-    db = Database(os.environ["EVAL_DSN"])
     questions, gold = read_json("eval/questions.json"), read_json("eval/gold/answers.json")
     if args.verify_gold:
+        db = Database(os.environ["EVAL_DSN"])
         verify_gold(db, questions, gold)
         print("All 20 reference queries agree with independent source-derived answers.")
     else:
-        report = score_run(args.run, db, questions, gold)
+        report = score_run(args.run, questions, gold)
         write_json(args.out, report)
         print(f"{report['stage']}: {report['correct']}/{report['total']}")
 

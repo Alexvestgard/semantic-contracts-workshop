@@ -1,5 +1,5 @@
 {
-  "instructions": "Inspect the relevant tables before writing SQL. Check column names and sample values. Test your query, fix errors, and submit the query that answers the question exactly.",
+  "instructions": "Inspect the relevant tables before writing SQL. Check column names and sample values. Test your query, fix errors, and submit the result values that answer the question exactly.",
   "semantics": {
     "missing_text": "null_or_blank",
     "object_key": "object_id",
