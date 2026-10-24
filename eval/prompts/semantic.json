@@ -1,7 +1,7 @@
 {
   "instructions": "Translate the question into one PostgreSQL SELECT using the supplied schema. Resolve the entity, field, missing-value rule, aggregation, and requested output before writing SQL. Use the semantic rules below. After the query succeeds, copy its result rows exactly into the final answer; do not recalculate or substitute values. No retries are allowed.",
   "semantics": {
-    "missing_text": "null_only",
+    "missing_text": "null_or_blank",
     "object_key": "object_id",
     "public_domain": "explicit_true",
     "ordering": "question",
