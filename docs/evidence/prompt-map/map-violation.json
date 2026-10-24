@@ -1,0 +1,14 @@
+{
+  "status": "fail",
+  "asset": "eval/prompts/map-violation.json",
+  "map_id": "museum-sql-prompt-map",
+  "map_version": "1.0.0",
+  "violations": [
+    {
+      "rule": "missing_text",
+      "expected": "null_or_blank",
+      "actual": "null_only",
+      "message": "Treat NULL and empty or whitespace-only text as missing. For populated text, use NULLIF(BTRIM(column), '') IS NOT NULL."
+    }
+  ]
+}

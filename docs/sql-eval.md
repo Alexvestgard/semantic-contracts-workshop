@@ -1,5 +1,9 @@
 # Museum SQL evaluation
 
+For the current-prompt → semantic-prompt comparison followed by the MAP/data-contract
+GitHub exercise, follow [the MAP workflow](prompt-map-workflow.md). The original
+three-stage commands below remain available for historical rehearsals.
+
 The default Codespaces command runs all 20 questions once with the improved
 prompt, using the schema-first, single-attempt setup and limits from the latest
 local CPU run:
