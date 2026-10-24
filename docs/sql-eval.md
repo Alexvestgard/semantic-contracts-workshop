@@ -9,7 +9,8 @@ bash scripts/rehearse_sql_eval.sh
 ```
 
 It skips pilots and the baseline/regressed stages. The local run scored 10/20 in
-18 minutes 31 seconds; native Codespaces performance remains unmeasured. See the
+18 minutes 31 seconds. Mark's Codespaces run scored 13/20 in 516.5 seconds; see
+[the result record](codespaces-eval-results.md). See the
 [20-question Codespaces instructions](codespaces-five-question-eval.md) for setup,
 fixed limits, saved evidence, and cleanup.
 
@@ -57,7 +58,8 @@ Keep the model volume when stopping containers to retain its cache.
 
 Docker Desktop may hide the pinned runner from Compose dependency discovery; the
 known limitation and native Linux target are recorded in [model setup](model-runner.md).
-The Codespaces walkthrough must be checked on native AMD64 before workshop acceptance.
+Mark completed the Codespaces walkthrough. Machine allocation and memory evidence
+remain open acceptance checks; see [the result record](codespaces-eval-results.md).
 
 ## Time pilots, then freeze the limits
 
@@ -227,5 +229,6 @@ project before running these checks.
 The implementation follows Mark's ten-question interview and approved five-stage
 sequence. The 10/10 difficulty split, specific questions, prompt versions, and typed
 contract mechanism are implementation proposals for review. Model smoke tests are
-already recorded in `model-runner.md`; full Codespaces timing and the desired score
-sequence require measured rehearsal evidence. See [the validation record](sql-eval-validation.md).
+already recorded in `model-runner.md`. The improved-only Codespaces run is recorded
+in [the result summary](codespaces-eval-results.md); the three-stage score sequence
+and resource acceptance checks remain open. See [the validation record](sql-eval-validation.md).

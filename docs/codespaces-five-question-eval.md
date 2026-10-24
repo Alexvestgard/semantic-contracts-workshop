@@ -42,7 +42,9 @@ python3 scripts/sql_eval.py stop
 The first model download is about 4.09 GB. The completed local ARM64 Docker Desktop
 CPU run scored 10/20 in 18 minutes 31 seconds: seven SQL errors and three wrong
 answers. About 70% of inference time was prompt processing. These are local
-measurements; Codespaces timing and native 16 GB acceptance remain unverified.
+measurements. Mark's subsequent Codespaces run scored 13/20 in 516.5 seconds. See
+[the result record](codespaces-eval-results.md) for evidence and remaining resource
+acceptance checks.
 
 If startup fails, keep `start.log` and the printed evidence directory. Local
 Docker Desktop encountered a Compose dependency-discovery error. With multiple
