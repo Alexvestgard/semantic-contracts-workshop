@@ -1,5 +1,14 @@
 # Semantic contracts workshop: review proposal
 
+> **Current MAP workflow:** Mark requested two evaluations: preserve the current
+> prompt for the first, then test a semantics-focused prompt with unchanged
+> questions and scoring. Add the MAP as a new section of the original data
+> contract, deliberately violate it in the prompt, and show a failed required
+> GitHub check with an explanatory PR comment. The regression demonstration
+> does not require another model evaluation. See [the workflow](prompt-map-workflow.md).
+> Score improvement must be measured; it is not an acceptance claim made in advance.
+
+
 > **23 October context update:** Mark requested the connected database, full schema,
 > and supported SQL operations in the initial prompt. The agent now starts with an
 > answer query; schema discovery actions are removed. All three stages receive the

@@ -1,0 +1,27 @@
+{
+  "current": {
+    "correct": 12,
+    "total": 20,
+    "elapsed_seconds": 283.324
+  },
+  "semantic": {
+    "correct": 15,
+    "total": 20,
+    "elapsed_seconds": 351.284
+  },
+  "delta": 3,
+  "improvement_observed": true,
+  "fixed": [
+    "q03",
+    "q08",
+    "q09",
+    "q15",
+    "q19",
+    "q20"
+  ],
+  "regressed": [
+    "q07",
+    "q14",
+    "q18"
+  ]
+}

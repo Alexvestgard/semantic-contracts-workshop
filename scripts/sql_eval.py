@@ -155,8 +155,15 @@ def main():
         with lock.open("x") as handle:
             handle.write("Agent process has not exited.\n")
         try:
-            container_run("eval-agent", [(out, "/out", False), (budget, "/budget.json", True)],
-                          "--stage", args.stage, *(["--pilot"] if pilot else []))
+            mounts = [(out, "/out", False), (budget, "/budget.json", True)]
+            prompt_args = []
+            if args.prompt:
+                if not args.prompt.is_file():
+                    raise ValueError("Prompt file does not exist.")
+                mounts.append((args.prompt.resolve(), "/prompt.json", True))
+                prompt_args = ["--prompt", "/prompt.json"]
+            container_run("eval-agent", mounts, "--stage", args.stage, *prompt_args,
+                          *(["--pilot"] if pilot else []))
         finally:
             lock.unlink()
     elif args.action == "freeze":

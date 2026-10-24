@@ -8,6 +8,10 @@ RULES = {
     "object_key": {"object_id": "Join museum tables on object_id. Count artworks at the object_id grain; do not multiply counts through expansions."},
     "public_domain": {"explicit_true": "Public domain means is_public_domain IS TRUE. An image URL alone does not establish public-domain status."},
     "ordering": {"question": "Return only requested columns in their requested order. Follow requested sorting and tie breakers; do not add a LIMIT unless requested."},
+    "sample_scope": {"object_records": "In this exercise, artwork means one museum object record identified by object.object_id. This is a local counting convention, not evidence that every collection item is classified as an artwork in Linked Art. Do not count images, tags, or conceptual works as extra objects."},
+    "field_meaning": {"museum_columns": "Artist name is object.artist_display_name; title is object.title; department is object_gallery_info.department; culture is object_history.culture; classification and medium are in object_physical_properties; primary image URL is object_images.primary_image; public-domain status is object_copyright.is_public_domain. Use the stated field, not a related label or proxy."},
+    "aggregation": {"requested_grain": "For populated text use NULLIF(BTRIM(column), '') IS NOT NULL; for missing text use NULLIF(BTRIM(column), '') IS NULL. Combine conditions with AND or OR exactly as asked. For object counts count object IDs, not distinct field values. For distinct values use DISTINCT; for counts per category GROUP BY that category. Join only the tables needed, using qualified object_id columns. Preserve the requested row grain and avoid extra columns."},
+    "answer_values": {"query_rows": "The query tool returns columns and rows. Submit only its complete rows array as the final rows value, preserving numbers, strings, NULLs, duplicates, and row order. Do not return SQL, column names, explanations, or numbers remembered from other questions."},
 }
 
 

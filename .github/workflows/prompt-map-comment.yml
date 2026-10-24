@@ -1,0 +1,72 @@
+name: Prompt MAP comment
+on:
+  workflow_run:
+    workflows: [Prompt MAP]
+    types: [completed]
+permissions:
+  actions: read
+  pull-requests: write
+jobs:
+  explain:
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # This workflow runs from the default branch. Never check out or execute PR code.
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const { execFileSync } = require('child_process');
+            const run = context.payload.workflow_run;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prs = run.pull_requests || [];
+            if (prs.length !== 1) {
+              core.notice('No unambiguous PR association; violation details remain in the check summary.');
+              return;
+            }
+            const number = prs[0].number;
+            const { data: pr } = await github.rest.pulls.get({owner, repo, pull_number: number});
+            if (pr.state !== 'open' || pr.head.sha !== run.head_sha) {
+              core.notice('Skipping stale or closed PR.');
+              return;
+            }
+            const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts,
+              {owner, repo, run_id: run.id});
+            const artifact = artifacts.find(a => a.name === 'prompt-map-report' && !a.expired);
+            let details = 'The checker did not produce a readable report. Inspect the workflow logs.';
+            if (artifact && artifact.size_in_bytes <= 100000) {
+              const archive = await github.rest.actions.downloadArtifact({owner, repo,
+                artifact_id: artifact.id, archive_format: 'zip'});
+              const zip = path.join(process.env.RUNNER_TEMP, 'prompt-map-report.zip');
+              fs.writeFileSync(zip, Buffer.from(archive.data));
+              // Read a single bounded JSON member. Never extract or execute artifact contents.
+              const text = execFileSync('unzip', ['-p', zip, 'report.json'], {maxBuffer: 64000}).toString();
+              const report = JSON.parse(text);
+              if (!['pass', 'fail'].includes(report.status) || !Array.isArray(report.violations)) {
+                throw new Error('Malformed MAP report');
+              }
+              details = report.violations.slice(0, 20).map(v =>
+                `Rule: ${String(v.rule)}\nExpected: ${JSON.stringify(v.expected)}\nActual: ${JSON.stringify(v.actual)}\n${String(v.message)}`
+              ).join('\n\n') || 'The prompt satisfies the approved MAP. This does not prove model accuracy.';
+            }
+            // Escape markup and mentions from untrusted PR data before posting.
+            details = details.slice(0, 18000).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;').replace(/@/g, '&#64;');
+            const marker = '<!-- museum-prompt-map -->';
+            const passed = run.conclusion === 'success';
+            const body = `${marker}\n## Prompt MAP: ${passed ? 'PASS' : 'FAIL'}\n\n` +
+              `Commit: \`${run.head_sha}\`\n\n` +
+              `The required **Prompt MAP contract** check ${passed ? 'passed' : 'did not pass'}. ` +
+              `Branch protection enforces the merge gate; this comment explains the result.\n\n` +
+              `<pre>${details}</pre>\n\n[View check](${run.html_url})`;
+            const comments = await github.paginate(github.rest.issues.listComments,
+              {owner, repo, issue_number: number});
+            const existing = comments.find(c => c.user.login === 'github-actions[bot]' && c.body.startsWith(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({owner, repo, comment_id: existing.id, body});
+            } else {
+              await github.rest.issues.createComment({owner, repo, issue_number: number, body});
+            }

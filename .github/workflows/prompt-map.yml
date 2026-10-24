@@ -1,0 +1,56 @@
+name: Prompt MAP
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    name: Prompt MAP contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        if: github.event_name == 'pull_request'
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: policy
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate prompt against approved MAP
+        shell: bash
+        run: |
+          set -euo pipefail
+          policy=candidate
+          if [ "${{ github.event_name }}" = pull_request ]; then
+            if [ -f policy/scripts/check_prompt_map.py ]; then
+              policy=policy
+            else
+              echo 'Bootstrap: no MAP checker on the base branch. Maintainer review is required before enforcing this check.' >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
+          python "$policy/scripts/check_prompt_map.py" --policy-root "$policy" --candidate-root candidate \
+            --report artifacts/prompt-map/report.json --markdown artifacts/prompt-map/report.md
+      - name: Include violation details in check summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f artifacts/prompt-map/report.md ]; then
+            cat artifacts/prompt-map/report.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prompt-map-report
+          path: artifacts/prompt-map/
+          if-no-files-found: error
+          retention-days: 14

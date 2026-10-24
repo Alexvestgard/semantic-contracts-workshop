@@ -19,6 +19,7 @@ def main():
     parser.add_argument("--pilot", action="store_true")
     parser.add_argument("--budget", default="/budget.json")
     parser.add_argument("--out", default="/out")
+    parser.add_argument("--prompt", help="Versioned prompt file; defaults to the selected stage's prompt")
     args = parser.parse_args()
     root = Path("eval")
     questions = read_json(root / ("pilots.json" if args.pilot else "questions.json"))
@@ -27,7 +28,7 @@ def main():
     budget = read_json(args.budget)
     if not args.pilot and budget.get("status") != "frozen":
         parser.error("Time pilots and freeze their budget before a scored run.")
-    prompt = read_json(root / "prompts" / (args.stage + ".json"))
+    prompt = read_json(args.prompt or root / "prompts" / (args.stage + ".json"))
     lock = read_json("models/gemma.lock.json")
     database = Database(os.environ["EVAL_DSN"])
     database_context = database.context()

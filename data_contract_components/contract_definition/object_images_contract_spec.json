@@ -61,5 +61,133 @@
           }
         }
       }
+    },
+    "metadataApplicationProfile": {
+      "id": "museum-sql-prompt-map",
+      "version": "1.0.0",
+      "title": "Museum SQL prompt metadata application profile",
+      "purpose": "Describe the meaning and use of metadata in the fixed museum SQL exercise. This local application profile is not a Linked Art conformance claim.",
+      "sources": [
+        {
+          "title": "Linked Art model introduction",
+          "url": "https://linked.art/model/intro/",
+          "use": "Distinguish physical objects from conceptual works and digital representations."
+        },
+        {
+          "title": "Linked Art required vocabulary: collection items and artworks",
+          "url": "https://linked.art/model/vocab/required/",
+          "use": "Collection membership does not establish artwork classification. This exercise explicitly uses a local object-record counting convention."
+        },
+        {
+          "title": "Workshop museum schema",
+          "path": "data_contract_components/data_assets/db_migrations/versions/00e9b3375a5f_create_met_museum_seed_tables.py",
+          "use": "Column meanings and object identifiers."
+        }
+      ],
+      "elements": [
+        {
+          "id": "missing_text",
+          "prompt_path": "semantics.missing_text",
+          "required": true,
+          "max_occurs": 1,
+          "value_type": "string",
+          "required_value": "null_or_blank",
+          "applies_to": [
+            "object.artist_display_name",
+            "object_history.culture",
+            "object_physical_properties.classification",
+            "object_physical_properties.medium",
+            "object_images.primary_image"
+          ],
+          "definition": "Treat NULL and empty or whitespace-only text as missing. For populated text, use NULLIF(BTRIM(column), '') IS NOT NULL."
+        },
+        {
+          "id": "object_key",
+          "prompt_path": "semantics.object_key",
+          "required": true,
+          "max_occurs": 1,
+          "value_type": "string",
+          "required_value": "object_id",
+          "applies_to": [
+            "*.object_id"
+          ],
+          "definition": "Join museum tables on object_id. Count artworks at the object_id grain; do not multiply counts through expansions."
+        },
+        {
+          "id": "public_domain",
+          "prompt_path": "semantics.public_domain",
+          "required": true,
+          "max_occurs": 1,
+          "value_type": "string",
+          "required_value": "explicit_true",
+          "applies_to": [
+            "object_copyright.is_public_domain"
+          ],
+          "definition": "Public domain means is_public_domain IS TRUE. An image URL alone does not establish public-domain status."
+        },
+        {
+          "id": "ordering",
+          "prompt_path": "semantics.ordering",
+          "required": true,
+          "max_occurs": 1,
+          "value_type": "string",
+          "required_value": "question",
+          "applies_to": [
+            "query result columns and rows"
+          ],
+          "definition": "Return only requested columns in their requested order. Follow requested sorting and tie breakers; do not add a LIMIT unless requested."
+        },
+        {
+          "id": "sample_scope",
+          "prompt_path": "semantics.sample_scope",
+          "required": true,
+          "max_occurs": 1,
+          "value_type": "string",
+          "required_value": "object_records",
+          "applies_to": [
+            "object.object_id"
+          ],
+          "definition": "In this exercise, artwork means one museum object record identified by object.object_id. This is a local counting convention, not evidence that every collection item is classified as an artwork in Linked Art. Do not count images, tags, or conceptual works as extra objects."
+        },
+        {
+          "id": "field_meaning",
+          "prompt_path": "semantics.field_meaning",
+          "required": true,
+          "max_occurs": 1,
+          "value_type": "string",
+          "required_value": "museum_columns",
+          "applies_to": [
+            "museum schema"
+          ],
+          "definition": "Artist name is object.artist_display_name; title is object.title; department is object_gallery_info.department; culture is object_history.culture; classification and medium are in object_physical_properties; primary image URL is object_images.primary_image; public-domain status is object_copyright.is_public_domain. Use the stated field, not a related label or proxy."
+        },
+        {
+          "id": "aggregation",
+          "prompt_path": "semantics.aggregation",
+          "required": true,
+          "max_occurs": 1,
+          "value_type": "string",
+          "required_value": "requested_grain",
+          "applies_to": [
+            "query result grain"
+          ],
+          "definition": "For populated text use NULLIF(BTRIM(column), '') IS NOT NULL; for missing text use NULLIF(BTRIM(column), '') IS NULL. Combine conditions with AND or OR exactly as asked. For object counts count object IDs, not distinct field values. For distinct values use DISTINCT; for counts per category GROUP BY that category. Join only the tables needed, using qualified object_id columns. Preserve the requested row grain and avoid extra columns."
+        },
+        {
+          "id": "answer_values",
+          "prompt_path": "semantics.answer_values",
+          "required": true,
+          "max_occurs": 1,
+          "value_type": "string",
+          "required_value": "query_rows",
+          "applies_to": [
+            "final.rows"
+          ],
+          "definition": "The query tool returns columns and rows. Submit only its complete rows array as the final rows value, preserving numbers, strings, NULLs, duplicates, and row order. Do not return SQL, column names, explanations, or numbers remembered from other questions."
+        }
+      ],
+      "promptAssetResourceName": "eval/prompts/semantic.json",
+      "approved_instructions": "Translate the question into one PostgreSQL SELECT using the supplied schema. Resolve the entity, field, missing-value rule, aggregation, and requested output before writing SQL. Use the semantic rules below. After the query succeeds, copy its result rows exactly into the final answer; do not recalculate or substitute values. No retries are allowed.",
+      "scope": "Checks prompt declarations, approved instructions, and rendered rule definitions against the approved MAP. It does not prove model compliance or full Linked Art conformance."
     }
   }
