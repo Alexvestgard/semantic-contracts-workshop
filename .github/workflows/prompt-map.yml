@@ -1,9 +1,8 @@
 name: Prompt MAP
 on:
   pull_request:
-    branches: [main]
+    # Include stacked PRs whose target is an implementation branch.
   push:
-    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -54,3 +53,15 @@ jobs:
           path: artifacts/prompt-map/
           if-no-files-found: error
           retention-days: 14
+  comment:
+    name: Explain MAP result
+    needs: validate
+    if: >-
+      always() && github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      actions: read
+      pull-requests: write
+    uses: ./.github/workflows/prompt-map-comment.yml
+    with:
+      validation_result: ${{ needs.validate.result }}

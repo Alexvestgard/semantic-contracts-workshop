@@ -19,7 +19,10 @@ const options = JSON.parse(process.argv[2]);
 const calls = [];
 const github = {
   rest: {
-    pulls: {get: async () => ({data: {state: 'open', head: {sha: options.stale ? 'new' : 'tested'}}})},
+    pulls: {get: async () => ({data: {state: options.closed ? 'closed' : 'open', head: {
+      sha: options.stale ? 'new' : 'tested',
+      repo: {full_name: options.internal ? 'museum/workshop' : 'contributor/workshop'}
+    }}})},
     actions: {listWorkflowRunArtifacts: 'artifacts', downloadArtifact: async () => ({data: []})},
     issues: {
       listComments: 'comments',
@@ -34,6 +37,13 @@ const context = {repo: {owner:'museum', repo:'workshop'}, payload: {workflow_run
   id: 1, head_sha: 'tested', conclusion: options.passed ? 'success' : 'failure',
   pull_requests: options.noPR ? [] : [{number: 2}], html_url: 'https://github.com/museum/workshop/actions/runs/1'
 }}};
+context.eventName = options.direct ? 'pull_request' : 'workflow_run';
+context.runId = 42;
+context.serverUrl = 'https://github.com';
+context.payload.pull_request = {number: 2, head: {sha: 'tested', repo: {
+  full_name: options.fork ? 'contributor/workshop' : 'museum/workshop'
+}}};
+process.env.VALIDATION_RESULT = options.passed ? 'success' : 'failure';
 const report = {status: options.passed ? 'pass' : 'fail', violations: options.passed ? [] : [
   {rule: 'missing_text', expected: 'null_or_blank', actual: 'null_only', message: '<script>@someone</script>'}
 ]};
@@ -72,4 +82,27 @@ new AsyncFunction('github','context','core','require',script)(github,context,{no
         for options in ({'stale':True}, {'noPR':True}):
             with self.subTest(options=options):
                 calls = self.run_reporter(**options)
+                self.assertFalse(any(kind in ('create', 'update') for kind, _ in calls))
+
+    def test_internal_pr_can_report_failure_before_default_branch_installation(self):
+        calls = self.run_reporter(direct=True, internal=True)
+        self.assertEqual(calls[0][0], 'create')
+        body = calls[0][1]['body']
+        self.assertIn('Prompt MAP: FAIL', body)
+        self.assertIn('Commit: `tested`', body)
+        self.assertIn('/actions/runs/42', body)
+
+    def test_internal_repair_updates_comment(self):
+        calls = self.run_reporter(direct=True, internal=True, passed=True, existing=True)
+        self.assertEqual(calls[0][0], 'update')
+        self.assertIn('Prompt MAP: PASS', calls[0][1]['body'])
+
+    def test_default_branch_reporter_skips_internal_pr_to_avoid_duplicate_comments(self):
+        calls = self.run_reporter(internal=True)
+        self.assertFalse(any(kind in ('create', 'update') for kind, _ in calls))
+
+    def test_direct_reporter_rejects_fork_stale_and_closed_prs(self):
+        for options in ({'fork': True}, {'stale': True}, {'closed': True}):
+            with self.subTest(options=options):
+                calls = self.run_reporter(direct=True, **options)
                 self.assertFalse(any(kind in ('create', 'update') for kind, _ in calls))

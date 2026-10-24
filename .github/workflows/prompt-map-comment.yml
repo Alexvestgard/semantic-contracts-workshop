@@ -1,5 +1,11 @@
 name: Prompt MAP comment
 on:
+  workflow_call:
+    inputs:
+      validation_result:
+        description: Result of the read-only validation job
+        required: true
+        type: string
   workflow_run:
     workflows: [Prompt MAP]
     types: [completed]
@@ -8,20 +14,38 @@ permissions:
   pull-requests: write
 jobs:
   explain:
-    if: github.event.workflow_run.event == 'pull_request'
+    if: >-
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.event == 'pull_request')
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      # This workflow runs from the default branch. Never check out or execute PR code.
+      # Separate runner; no checkout and no execution of files from the validation job.
+      # Internal PRs call this directly. Fork PRs use workflow_run from the default branch.
       - uses: actions/github-script@v7
+        env:
+          VALIDATION_RESULT: ${{ inputs.validation_result }}
         with:
           script: |
             const fs = require('fs');
             const path = require('path');
             const { execFileSync } = require('child_process');
-            const run = context.payload.workflow_run;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+            const direct = context.eventName === 'pull_request';
+            if (direct && context.payload.pull_request.head.repo.full_name !== `${owner}/${repo}`) {
+              core.notice('Fork PRs must use the default-branch reporter.');
+              return;
+            }
+            const run = direct ? {
+              id: context.runId,
+              head_sha: context.payload.pull_request.head.sha,
+              conclusion: process.env.VALIDATION_RESULT,
+              pull_requests: [{number: context.payload.pull_request.number}],
+              html_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`
+            } : context.payload.workflow_run;
             const prs = run.pull_requests || [];
             if (prs.length !== 1) {
               core.notice('No unambiguous PR association; violation details remain in the check summary.');
@@ -29,6 +53,10 @@ jobs:
             }
             const number = prs[0].number;
             const { data: pr } = await github.rest.pulls.get({owner, repo, pull_number: number});
+            if (!direct && pr.head.repo?.full_name === `${owner}/${repo}`) {
+              core.notice('Internal PRs are reported by their own validation workflow.');
+              return;
+            }
             if (pr.state !== 'open' || pr.head.sha !== run.head_sha) {
               core.notice('Skipping stale or closed PR.');
               return;
@@ -59,8 +87,8 @@ jobs:
             const passed = run.conclusion === 'success';
             const body = `${marker}\n## Prompt MAP: ${passed ? 'PASS' : 'FAIL'}\n\n` +
               `Commit: \`${run.head_sha}\`\n\n` +
-              `The required **Prompt MAP contract** check ${passed ? 'passed' : 'did not pass'}. ` +
-              `Branch protection enforces the merge gate; this comment explains the result.\n\n` +
+              `The **Prompt MAP contract** check ${passed ? 'passed' : 'did not pass'}. ` +
+              `When required by the target branch rules, a failed check blocks merging. This comment explains the result.\n\n` +
               `<pre>${details}</pre>\n\n[View check](${run.html_url})`;
             const comments = await github.paginate(github.rest.issues.listComments,
               {owner, repo, issue_number: number});

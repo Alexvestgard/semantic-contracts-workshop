@@ -81,9 +81,12 @@ and limitations. Participants should report their own observed scores.
 ## Add the MAP, then demonstrate a violation
 
 The implementation PR introduces the new contract section and the passing
-prompt together. Review and merge it before the participant PR exercise.
-The comment workflow must exist on the default branch before GitHub can run it
-for another workflow's completion.
+prompt together. A stacked PR can target that implementation branch before it
+is merged. Validation runs on every branch push and for every PR target, using that target's MAP as the
+approved policy. Branches in the same repository call the comment workflow
+directly after validation, so their comments work before installation on `main`.
+For fork PRs, the separate `workflow_run` reporter must first reach the default
+branch; fork workflows never receive a comment-writing token.
 
 In a participant branch, change the governed prompt:
 
@@ -102,8 +105,8 @@ Treat NULL and empty or whitespace-only text as missing. For populated text, use
 ```
 
 Commit that prompt change and open a PR. Keep the MAP and contract unchanged.
-GitHub's **Prompt MAP contract** check fails and the **Prompt MAP comment**
-workflow posts the explanation. Pushing a repair reruns the check and updates
+GitHub's **Prompt MAP contract** check fails and the comment job posts the
+explanation. Pushing a repair reruns the check and updates
 the existing bot comment instead of adding another one.
 
 To repair the example, restore `semantics.missing_text` to `null_or_blank` in
@@ -118,7 +121,7 @@ has produced its first check:
 
 1. Ensure GitHub Actions is enabled for the repository and the workflows are
    permitted. Fork runs may require maintainer approval.
-2. In the `main` branch ruleset or branch protection, require pull requests and
+2. In the target branch ruleset or branch protection, require pull requests and
    the **Prompt MAP contract** status check. Keep the existing database checks
    required too; do not replace other protections.
 3. Require review for changes to the contract's MAP section,
@@ -128,6 +131,10 @@ has produced its first check:
 This PR provides workflow files; their presence does not prove Actions is
 active or branch protection is configured. Repository settings and a live
 failing PR must be verified before presenting the gate as active.
+For a stacked demonstration, target the parent PR branch with a separate ruleset
+requiring **Prompt MAP contract** from GitHub Actions. A rule covering only
+`main` does not protect a PR targeting another branch. Keep the demo rule scoped
+to that exact branch and preserve existing repository protections.
 
 For an established installation, validation uses the base branch's checker,
 MAP, and contract section against the proposed prompt. A PR cannot change the
@@ -136,10 +143,14 @@ MAP policy, validator, or renderer intentionally require a separate maintainer
 review and policy rollout. The first installation has no base-branch MAP, so
 it validates the candidate and visibly reports bootstrap mode.
 
-The validation workflow runs with read-only permissions and publishes a bounded
-JSON report. The comment workflow runs from the default branch, checks that the
-PR still points to the evaluated commit, reads report data without executing PR
-code, escapes markup and mentions, and updates only its own marked bot comment.
+The validation job runs with read-only permissions and publishes a bounded JSON
+report. A separate comment job has only Actions read and pull-request write
+permissions. It performs no checkout, checks that the PR still points to the
+evaluated commit, reads report data without executing files from the validation
+runner, escapes markup and mentions, and updates only its own marked bot comment.
+Same-repository contributors can edit workflow code, so those changes still need
+maintainer review. Fork reports run the trusted default-branch workflow; that
+workflow skips internal PRs to avoid duplicate comments.
 If GitHub supplies no unambiguous PR association, the details remain in the check
 summary. Comment failure cannot turn the failed validation check into a pass.
 
