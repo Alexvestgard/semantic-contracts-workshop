@@ -6,7 +6,7 @@ from pathlib import Path
 import sys
 import time
 
-from .agent import attempt
+from .agent import ACTION_FORMAT, PROTOCOL, attempt
 from .common import dumps, read_json, select_questions, write_json
 from .database import Database
 
@@ -30,7 +30,9 @@ def main():
     prompt = read_json(root / "prompts" / (args.stage + ".json"))
     lock = read_json("models/gemma.lock.json")
     database = Database(os.environ["EVAL_DSN"])
+    database_context = database.context()
     controls = {"questions": questions, "model_config": lock, "budget": budget,
+                "database_context": database_context, "protocol": PROTOCOL, "action_format": ACTION_FORMAT,
                 "temperature": 0, "question_ids": [q["id"] for q in questions]}
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -48,7 +50,7 @@ def main():
                 trace.flush()
                 action = event.get("action", {}).get("action", "error")
                 print(f"{question['id']} turn {event['turn']}: {action}", flush=True)
-            result = attempt(question, prompt, database, client, budget, record)
+            result = attempt(question, prompt, database, client, budget, record, database_context=database_context)
         write_json(out / (question["id"] + ".json"), result)
         print(f"{question['id']}: {result['status']}, {result['tool_calls']} calls, {result['elapsed_seconds']}s", flush=True)
     manifest.update(complete=True, elapsed_seconds=round(time.monotonic() - start, 3))

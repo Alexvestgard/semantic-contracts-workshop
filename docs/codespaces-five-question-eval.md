@@ -36,11 +36,33 @@ When finished, stop the model and keep its downloaded cache:
 docker compose -p workshop-sql-eval -f compose.models.yaml -f compose.eval.yaml stop model-runner
 ```
 
-The first model download is about 4.09 GB. In the completed local ARM64 run, these
-five questions took about 49 minutes across all three prompts, plus nine minutes
-for pilots and additional setup time. Codespaces performance has not been measured.
-The local full run did not show the intended improvement/regression pattern;
-retain whatever scores this run produces.
+Each question receives the schema and SQL rules up front. It gets one SQL attempt
+and, if the query succeeds, one final-answer response. Errors end the attempt
+without retries.
+
+The first model download is about 4.09 GB. The latest local ARM64 CPU run used this
+logic for all 20 questions with the improved prompt: 10/20 correct in 18 minutes
+31 seconds, with seven SQL errors and three incorrect answers. Prompt processing
+accounted for about 70% of inference time. That run used a 4,096-token context,
+384 output tokens, and 271-second request and question limits. This script derives
+its question timeout from new pilots, so its limits and timing may differ.
+Codespaces performance and the revised three-stage sequence remain unmeasured.
+
+To select all 20 questions, run this before starting a new rehearsal:
+
+```sh
+python3 - <<'PYSELECT'
+import json
+from pathlib import Path
+Path("eval/question-set.json").write_text(
+    json.dumps([f"q{i:02}" for i in range(1, 21)], indent=2) + "\n"
+)
+PYSELECT
+```
+
+The rehearsal script then runs 60 scored attempts across the three prompts.
+The default selection remains q01–q05. Keep whatever scores the run produces;
+the intended improvement/regression pattern is not yet established.
 
 If `start` fails, keep `start.log` and the printed evidence directory. The local
 Docker Desktop run encountered a Compose dependency-discovery error; native

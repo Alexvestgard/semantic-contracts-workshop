@@ -35,7 +35,7 @@ def validate_sql(sql):
             raise ValueError("SQL may only read data, including inside CTEs; row locks are not allowed.")
         if isinstance(node, exp.Table):
             if node.db not in ("", "public") or node.catalog or node.name not in set(TABLES) | ctes:
-                raise ValueError("Only the museum tables are available; use the schema tool.")
+                raise ValueError("Only the museum tables in the supplied schema are available.")
         if isinstance(node, exp.Dot):
             raise ValueError("Qualified functions and custom types are not allowed.")
         if isinstance(node, exp.Func):
@@ -67,6 +67,43 @@ class Database:
             rows = cur.fetchmany(limit + 1)
             return {"columns": [col.name for col in cur.description],
                     "rows": rows[:limit], "truncated": len(rows) > limit}
+
+    def context(self):
+        """Read schema metadata once, without loading rows or connection credentials."""
+        with self.connection() as conn:
+            database = conn.execute("SELECT current_database()").fetchone()[0]
+            columns = conn.execute("""
+                SELECT c.relname, a.attname, format_type(a.atttypid, a.atttypmod),
+                       col_description(c.oid, a.attnum)
+                FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                JOIN pg_attribute a ON a.attrelid = c.oid
+                WHERE n.nspname = 'public' AND c.relname = ANY(%s)
+                  AND a.attnum > 0 AND NOT a.attisdropped
+                ORDER BY c.relname, a.attnum
+            """, (list(TABLES),)).fetchall()
+            keys = conn.execute("""
+                SELECT c.relname, pg_get_constraintdef(k.oid)
+                FROM pg_constraint k JOIN pg_class c ON c.oid = k.conrelid
+                JOIN pg_namespace n ON n.oid = c.relnamespace
+                WHERE n.nspname = 'public' AND c.relname = ANY(%s)
+                  AND k.contype IN ('p', 'f')
+                ORDER BY c.relname, k.conname
+            """, (list(TABLES),)).fetchall()
+        tables = {name: [] for name in TABLES}
+        for table, name, datatype, comment in columns:
+            tables[table].append(f"{name} {datatype}" + (f" -- {comment}" if comment else ""))
+        if any(not columns for columns in tables.values()):
+            raise ValueError("The database is missing an expected museum table; finish workshop setup first.")
+        lines = [f"PostgreSQL database: {database}; schema: public. Read-only access is already connected.",
+                 "Use the query action; no connection command or credentials are needed.",
+                 "Allowed SQL: one SELECT, including WITH, JOIN, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT, and set operations.",
+                 "Use only the tables below. Writes, DDL, multiple statements, catalog queries, and row locks are rejected.",
+                 "Supported functions include COUNT, SUM, AVG, MIN, MAX, LOWER, UPPER, TRIM, BTRIM, LTRIM, RTRIM, LENGTH, ROUND, ABS, NULLIF, COALESCE, EXTRACT, DATE_TRUNC, ROW_NUMBER, RANK, DENSE_RANK, and UNNEST. CASE and ordinary built-in CASTs are allowed.",
+                 f"Each query has a {self.timeout_ms} ms database timeout."]
+        for table, columns in tables.items():
+            lines.append(f"{table}: " + "; ".join(columns))
+        lines.extend(f"{table}: {definition}" for table, definition in keys)
+        return "\n".join(lines)
 
     def schema(self, table=None):
         if table is None or table not in TABLES:

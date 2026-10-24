@@ -18,8 +18,15 @@ The question set is a teaching diagnostic, not a general model benchmark.
 
 The local ARM64 rehearsal took about 49 minutes for these five questions across
 all three prompts, plus nine minutes for pilots and additional setup time.
-Codespaces timing is unmeasured. Reducing the question count does not fix the
-observed schema loops or guarantee the intended score pattern.
+Codespaces timing is unmeasured. Those timings predate the upfront schema context. The revised agent receives the
+connected database name, table and column definitions, keys, and supported SQL
+operations before its first model call. It starts with an answer query; schema
+discovery actions are no longer available. A local CPU run of the revised improved
+prompt answered all five correctly in 3 minutes 38 seconds: 130 seconds for the
+first question and 19–25 seconds each thereafter. It used 10 model calls instead
+of the earlier 45. The request timeout also increased from 45 to 271 seconds for
+this timing diagnostic; it was not a fresh three-stage comparison. Native Codespaces
+timing and the revised baseline/regression scores remain unmeasured.
 
 For a copyable command sequence, see [the five-question Codespaces run](codespaces-five-question-eval.md).
 
@@ -64,7 +71,7 @@ The Codespaces walkthrough must be checked on native AMD64 before workshop accep
 
 ## Time pilots, then freeze the limits
 
-Three separate pilot questions establish a starting tool/time budget. They are
+Three separate pilot questions establish a starting time budget. They are
 excluded from the five scored questions. Run the improved prompt for the pilot:
 
 ```sh
@@ -73,19 +80,21 @@ python scripts/sql_eval.py freeze
 ```
 
 Freezing requires a completed pilot run, including any failed attempts. It records
-the outcome counts, sets the tool limit to the observed maximum plus three (at least
-six), and sets the question timeout to 1.5 times the slowest pilot (at least 60 seconds). Inspect
+the outcome counts, keeps the tool limit at one query, and sets the question timeout to 1.5 times the slowest pilot (at least 60 seconds). Inspect
 the pilot traces before accepting those limits. Timeouts and invalid SQL are useful
 failures; a perfect pilot is not required. Submission is not a correctness check.
 Limits are identical for all three scored runs.
 
-The initial pilot allows 12 database calls, 180 seconds per question, and a
-45-second request timeout. These are provisional limits, not measured performance.
-The agent gets at most the tool-call limit plus four model turns, so invalid
-responses cannot create an unbounded retry loop. Each SQL statement has a two-second
-database timeout. Tool output is bounded to 20 rows and recent context is bounded.
-The model response uses a JSON schema that permits one schema, query, or final
-action. The application validates the action again before executing a tool.
+The initial pilot allows one database call, 180 seconds per question, and a
+180-second request timeout so initial schema processing is not cut off after 45
+seconds. The remaining question time still caps every request. These are provisional
+limits, not measured performance.
+Each question gets one query response and, if the query succeeds, one final-answer
+response. Separate JSON schemas restrict each phase, and the application checks the
+action again before execution. Failed SQL, malformed responses, and truncated results
+end the attempt without a retry. The scorer still evaluates the submitted answer rows.
+Each SQL statement has a two-second database timeout. Tool output is bounded to 20
+rows. A result that exceeds the observation budget fails instead of being cut off.
 
 ## Run the three scored stages
 
@@ -114,7 +123,7 @@ SQL remains in query-tool traces. No hidden reasoning is requested. Reports show
 timeouts, invalid answers, and wrong results; query errors remain in the traces.
 
 All stages use fresh question contexts and the same model configuration, question
-order, decoding settings, and budget. These settings are recorded as readable values
+order, decoding settings, budget, database context, and action protocol. These settings are recorded as readable values
 and compared directly. Keep the eval code and workshop data unchanged through
 all three runs; the eval does not fingerprint the database. The separate
 `verify-gold` setup check confirms that reference queries agree with the expected
@@ -160,8 +169,10 @@ instruction changes before updating the approved text. No contract-stage accurac
 selects the first five basic questions for every scored stage. The full bank covers
 counts, missing text, public-domain flags, departments, sorting, distinct values,
 and joins. Every question specifies its result shape; ambiguous requirements are
-avoided in this first SQL-only exercise. Column comments remain available through
-the schema tool in every stage.
+avoided in this first SQL-only exercise. Column types, comments, and primary/foreign keys are supplied up front in every
+stage. This metadata is read once per stage and saved in its manifest; it contains
+no answer rows or connection credentials. The model can query the existing database
+and submit an answer. It cannot request schema discovery.
 
 The agent submits result values in a final action. For example, a count of 42 is
 `{"action":"final","rows":[[42]]}`. Multiple columns occupy one row in the order the
@@ -196,7 +207,7 @@ It has no gold, scorer, repository mount, Docker socket, file tool, or shell too
 It runs as a non-root user with a read-only root filesystem on an internal network.
 The database role grants SELECT only; the SQL parser rejects writes, multiple
 statements, non-museum tables, row locks, and functions outside a small allowlist.
-Only the controlled schema tool queries catalog metadata.
+Only the runtime metadata reader queries catalogs to prepare the supplied schema.
 
 The eval requirements are `psycopg[binary]`, already used by the workshop, and
 SQLGlot 30.24.0 for SQL parsing. SQLGlot uses the

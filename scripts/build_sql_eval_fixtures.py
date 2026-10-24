@@ -44,12 +44,12 @@ write('eval/questions.json', q)
 write('eval/gold/answers.json', {'sentinel': 'GOLD_ONLY_8b45b406_reference_answers', 'answers': gold})
 write('eval/pilots.json', [{'id': 'p01', 'question': 'Return the three largest object IDs in descending order.', 'ordered': True}, {'id': 'p02', 'question': 'How many artworks belong to the Musical Instruments department? Return one count.', 'ordered': False}, {'id': 'p03', 'question': 'Return object ID and title for the first three Asian Art artworks by ascending object ID.', 'ordered': True}])
 base = {'instructions': 'Answer the question using the database tools. Submit the requested result values as rows.', 'semantics': {}}
-improved = {'instructions': 'Inspect the relevant tables before writing SQL. Check column names and sample values. Test your query, fix errors, and submit the result values that answer the question exactly.', 'semantics': {'missing_text': 'null_or_blank', 'object_key': 'object_id', 'public_domain': 'explicit_true', 'ordering': 'question'}}
+improved = {'instructions': 'Use the supplied schema and SQL rules to query the answer directly. Run one query, then submit the result values that answer the question exactly. No retries are allowed.', 'semantics': {'missing_text': 'null_or_blank', 'object_key': 'object_id', 'public_domain': 'explicit_true', 'ordering': 'question'}}
 regressed = json.loads(json.dumps(improved))
 regressed['semantics']['missing_text'] = 'null_only'
 for name, v in [('baseline', base), ('improved', improved), ('regressed', regressed)]:
     write('eval/prompts/' + name + '.json', v)
 
 write('eval/prompt-contract.json', {'version': 1, 'required_semantics': improved['semantics'], 'scope': 'Checks declared semantic settings and approved free-text instructions; does not prove model compliance.', 'approved_instructions': improved['instructions']})
-write('eval/pilot-budget.json', {'status': 'pilot', 'max_tool_calls': 12, 'question_timeout_seconds': 180, 'request_timeout_seconds': 45, 'max_output_tokens': 384, 'tool_row_limit': 20, 'history_characters': 6500, 'observation_characters': 3000})
+write('eval/pilot-budget.json', {'status': 'pilot', 'max_tool_calls': 1, 'question_timeout_seconds': 180, 'request_timeout_seconds': 180, 'max_output_tokens': 384, 'tool_row_limit': 20, 'history_characters': 6500, 'observation_characters': 3000})
 print('20 questions, 3 pilots, 3 prompt versions; reference answers calculated from source JSON')

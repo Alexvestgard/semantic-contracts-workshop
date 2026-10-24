@@ -34,7 +34,7 @@ class QuestionSetTests(unittest.TestCase):
         gold = {"answers": {qid: references["answers"][qid] for qid in ids}}
         self.assertEqual(len(bank), 20)
 
-        def fake_attempt(question, *args):
+        def fake_attempt(question, *args, **kwargs):
             return {"id": question["id"], "status": "submitted", "rows": [[0]],
                     "tool_calls": 0, "elapsed_seconds": 0, "events": []}
 
@@ -48,7 +48,8 @@ class QuestionSetTests(unittest.TestCase):
                 out = root / stage
                 argv = ["run", "--stage", stage, "--budget", str(root / "budget.json"), "--out", str(out)]
                 with patch("sys.argv", argv), patch.dict("os.environ", {"EVAL_DSN": "unused"}), \
-                     patch("sql_eval.run.Database"), patch("sql_eval.run.attempt", side_effect=fake_attempt) as attempt:
+                     patch("sql_eval.run.Database") as database, patch("sql_eval.run.attempt", side_effect=fake_attempt) as attempt:
+                    database.return_value.context.return_value = "PostgreSQL public.object: object_id integer"
                     run_main()
                 self.assertEqual([call.args[0]["id"] for call in attempt.call_args_list], ids)
                 self.assertEqual(sorted(p.stem for p in out.glob("q*.json")), ids)
@@ -204,6 +205,10 @@ class AgentTests(unittest.TestCase):
         self.budget["max_tool_calls"] = 2
         self.prompt = read_json(ROOT / "eval/prompts/baseline.json")
 
+    def test_schema_discovery_action_is_not_available(self):
+        with self.assertRaises(ValueError):
+            parse_action('{"action":"schema"}')
+
     def test_no_shell_or_file_action(self):
         for action in ('{"action":"shell","command":"id"}', '{"action":"read_file","path":"/gold"}'):
             with self.assertRaises(ValueError):
@@ -229,11 +234,14 @@ class AgentTests(unittest.TestCase):
             def complete(self, request, **kwargs):
                 self.calls += 1
                 if self.calls == 1:
+                    self_outer.assertIn("public.object: object_id integer", request)
+                    self_outer.assertIn("Start with a query", request)
+                    self_outer.assertNotIn('"action":"schema"', request)
                     return {"answer":'{"action":"query","sql":"SELECT COUNT(*) FROM object"}'}
                 self_outer.assertIn('"rows": [[7]]', request)
                 return {"answer":'{"action":"final","rows":[[7]]}'}
         self_outer = self
-        result = attempt({"id":"x","question":"Count"}, self.prompt, DB(), Client(), self.budget)
+        result = attempt({"id":"x","question":"Count"}, self.prompt, DB(), Client(), self.budget, database_context="public.object: object_id integer")
         self.assertEqual(result["rows"], [[7]])
         self.assertEqual(result["tool_calls"], 1)
         self.assertEqual(result["events"][0]["action"]["sql"], "SELECT COUNT(*) FROM object")
@@ -245,18 +253,20 @@ class AgentTests(unittest.TestCase):
             calls = []
             def complete(self, request, **kwargs):
                 self.calls.append(request)
-                return {"answer":'{"action":"schema"}', "finish_reason":"stop"}
+                return {"answer":'{"action":"query","sql":"SELECT COUNT(*) FROM object"}', "finish_reason":"stop"}
         class DB:
             calls = 0
-            def schema(self, table):
+            def query(self, sql, limit):
                 self.calls += 1
-                return {"tables":["object"]}
+                return {"rows":[[7]], "truncated":False}
         client, db = Client(), DB()
-        one = attempt({"id":"1","question":"FIRST_PRIVATE_QUESTION"}, self.prompt, db, client, self.budget)
-        self.assertEqual(one["tool_calls"], 2)
-        self.assertEqual(db.calls, 2)
+        one = attempt({"id":"1","question":"FIRST_PRIVATE_QUESTION"}, self.prompt, db, client, self.budget, database_context="public.object: object_id integer")
+        self.assertEqual(one["tool_calls"], 1)
+        self.assertEqual(one["status"], "invalid_action")
+        self.assertEqual(len(client.calls), 2)
+        self.assertEqual(db.calls, 1)
         before = len(client.calls)
-        attempt({"id":"2","question":"Second question"}, self.prompt, db, client, self.budget)
+        attempt({"id":"2","question":"Second question"}, self.prompt, db, client, self.budget, database_context="public.object: object_id integer")
         self.assertNotIn("FIRST_PRIVATE_QUESTION", client.calls[before])
 
     def test_truncated_model_response_is_not_accepted(self):
@@ -264,20 +274,49 @@ class AgentTests(unittest.TestCase):
             config = {}
             def complete(self, *args, **kwargs):
                 return {"answer":'{"action":"final","rows":[[1]]}',"finish_reason":"length"}
-        result = attempt({"id":"x","question":"Count"}, self.prompt, None, Client(), self.budget)
+        result = attempt({"id":"x","question":"Count"}, self.prompt, None, Client(), self.budget, database_context="public.object: object_id integer")
         self.assertIsNone(result["rows"])
-        self.assertEqual(result["status"], "turn_limit")
+        self.assertEqual(result["status"], "truncated_response")
+        self.assertEqual(len(result["events"]), 1)
 
-    def test_submission_does_not_execute_scorer(self):
-        class Client:
-            config = {}
-            def complete(self, *args, **kwargs):
-                return {"answer":'{"action":"final","rows":[[3025]]}',"finish_reason":"stop"}
-        result = attempt({"id":"x","question":"Count"}, self.prompt, None, Client(), self.budget)
-        self.assertEqual(result["status"], "submitted")
-        self.assertNotIn("correct", result)
-        self.assertEqual(result["rows"], [[3025]])
-        self.assertNotIn("sql", result)
+    def test_single_attempt_failures_and_phase_schemas(self):
+        cases = [
+            ([{'action':'final','rows':[[1]]}], None, 'invalid_action', 0, 1),
+            ([{'action':'query','sql':'SELECT 1'}], ValueError('Bad SQL'), 'query_error', 1, 1),
+            ([{'action':'query','sql':'SELECT 1'}], {'rows':[[1]],'truncated':True}, 'truncated_result', 1, 1),
+            ([{'action':'query','sql':'SELECT 1'}], {'rows':[['x'*4000]],'truncated':False}, 'observation_limit', 1, 1),
+            ([{'action':'query','sql':'SELECT 1'}, 'bad json'], {'rows':[[1]],'truncated':False}, 'invalid_action', 1, 2),
+            ([{'action':'query','sql':'SELECT 1'}, {'action':'final','rows':[[3025]]}], {'rows':[[1]],'truncated':False}, 'submitted', 1, 2),
+        ]
+        for responses, observation, status, queries, calls in cases:
+            with self.subTest(status=status):
+                class Client:
+                    config = {}
+                    formats = []
+                    def complete(self, request, **kwargs):
+                        response = responses[len(self.formats)]
+                        self.formats.append(kwargs['response_format'])
+                        return {'answer': response if isinstance(response, str) else json.dumps(response)}
+                class DB:
+                    calls = 0
+                    def query(self, sql, limit):
+                        self.calls += 1
+                        if isinstance(observation, Exception):
+                            raise observation
+                        return observation
+                client, db = Client(), DB()
+                result = attempt({'id':'x','question':'Count'}, self.prompt, db, client, self.budget,
+                                 database_context='public.object: object_id integer')
+                self.assertEqual(result['status'], status)
+                self.assertEqual(db.calls, queries)
+                self.assertEqual(len(client.formats), calls)
+                for phase, schema in zip(('query','final'), client.formats):
+                    self.assertEqual(schema['json_schema']['schema']['properties']['action']['const'], phase)
+                self.assertNotIn('correct', result)
+                if status == 'submitted':
+                    self.assertEqual(result['rows'], [[3025]])
+                else:
+                    self.assertIsNone(result['rows'])
 
     def test_incomplete_pilot_cannot_freeze_budget(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -292,7 +331,7 @@ class AgentTests(unittest.TestCase):
                        "controls":{"question_ids":["p"],"budget":self.budget}})
             write_json(path / "p.json", {"status":"timeout","tool_calls":4,"elapsed_seconds":180})
             result = freeze_budget(path, path / "budget.json")
-            self.assertEqual(result["max_tool_calls"], 7)
+            self.assertEqual(result["max_tool_calls"], 1)
             self.assertEqual(result["question_timeout_seconds"], 270)
             self.assertEqual(result["pilot_outcomes"], {"timeout":1})
 

@@ -96,7 +96,7 @@ def freeze_budget(pilot_dir, destination):
     if not answers:
         raise ValueError("The pilot must contain recorded attempts.")
     budget = dict(manifest["controls"]["budget"])
-    budget.update(status="frozen", max_tool_calls=max(6, max(a["tool_calls"] for a in answers) + 3),
+    budget.update(status="frozen", max_tool_calls=1,
                   question_timeout_seconds=max(60, math.ceil(max(a["elapsed_seconds"] for a in answers) * 1.5)),
                   pilot_outcomes=dict(Counter(a["status"] for a in answers)))
     write_json(destination, budget)

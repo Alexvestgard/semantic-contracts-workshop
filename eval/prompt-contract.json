@@ -7,5 +7,5 @@
     "ordering": "question"
   },
   "scope": "Checks declared semantic settings and approved free-text instructions; does not prove model compliance.",
-  "approved_instructions": "Inspect the relevant tables before writing SQL. Check column names and sample values. Test your query, fix errors, and submit the result values that answer the question exactly."
+  "approved_instructions": "Use the supplied schema and SQL rules to query the answer directly. Run one query, then submit the result values that answer the question exactly. No retries are allowed."
 }
