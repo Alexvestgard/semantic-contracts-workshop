@@ -1,34 +1,24 @@
 # Museum SQL evaluation
 
-This exercise uses the existing museum sample and Gemma 4 E2B Q4_K_M in Docker
-Model Runner. It teaches a five-step sequence:
+The default Codespaces command runs all 20 questions once with the improved
+prompt, using the schema-first, single-attempt setup and limits from the latest
+local CPU run:
 
-1. Run a baseline prompt on five questions.
-2. Improve the prompt and run the same evaluation.
-3. Make a plausible prompt change and use the evaluation to detect a regression.
-4. Restore the exact improved prompt without another evaluation.
-5. Protect the restored prompt with semantic contracts, without another evaluation.
+```sh
+bash scripts/rehearse_sql_eval.sh
+```
 
-The three scored stages produce 15 attempts. This branch selects q01–q05 through
-`eval/question-set.json`: total artworks, populated artist names, missing artist
-names, public-domain artworks, and populated image URLs. The full 20-question bank
-and reference answers remain unchanged. The desired improvement and regression
-are rehearsal goals, not guaranteed scores. Retain every result, including no change.
-The question set is a teaching diagnostic, not a general model benchmark.
+It skips pilots and the baseline/regressed stages. The local run scored 10/20 in
+18 minutes 31 seconds; native Codespaces performance remains unmeasured. See the
+[20-question Codespaces instructions](codespaces-five-question-eval.md) for setup,
+fixed limits, saved evidence, and cleanup.
 
-The local ARM64 rehearsal took about 49 minutes for these five questions across
-all three prompts, plus nine minutes for pilots and additional setup time.
-Codespaces timing is unmeasured. Those timings predate the upfront schema context. The revised agent receives the
-connected database name, table and column definitions, keys, and supported SQL
-operations before its first model call. It starts with an answer query; schema
-discovery actions are no longer available. A local CPU run of the revised improved
-prompt answered all five correctly in 3 minutes 38 seconds: 130 seconds for the
-first question and 19–25 seconds each thereafter. It used 10 model calls instead
-of the earlier 45. The request timeout also increased from 45 to 271 seconds for
-this timing diagnostic; it was not a fresh three-stage comparison. Native Codespaces
-timing and the revised baseline/regression scores remain unmeasured.
-
-For a copyable command sequence, see [the five-question Codespaces run](codespaces-five-question-eval.md).
+The commands below also support the separate five-step teaching sequence: run a
+baseline, improve the prompt, introduce a regression, restore the improved prompt,
+and protect it. With the default q01–q20 selection, three scored stages produce
+60 attempts. Improvement and regression are rehearsal goals, not guaranteed scores.
+Retain every result. This question bank is a teaching diagnostic, not a general
+model benchmark.
 
 ## Setup in Codespaces
 
@@ -72,7 +62,7 @@ The Codespaces walkthrough must be checked on native AMD64 before workshop accep
 ## Time pilots, then freeze the limits
 
 Three separate pilot questions establish a starting time budget. They are
-excluded from the five scored questions. Run the improved prompt for the pilot:
+excluded from the 20 scored questions. Run the improved prompt for the pilot:
 
 ```sh
 python scripts/sql_eval.py pilot --stage improved
@@ -166,7 +156,7 @@ instruction changes before updating the approved text. No contract-stage accurac
 ## Questions and scoring
 
 `eval/questions.json` retains ten basic and ten intermediate questions; this branch
-selects the first five basic questions for every scored stage. The full bank covers
+selects all 20 questions for every scored stage. The full bank covers
 counts, missing text, public-domain flags, departments, sorting, distinct values,
 and joins. Every question specifies its result shape; ambiguous requirements are
 avoided in this first SQL-only exercise. Column types, comments, and primary/foreign keys are supplied up front in every

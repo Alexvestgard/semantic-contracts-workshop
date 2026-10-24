@@ -9,10 +9,11 @@
 > also increased for this diagnostic. Native Codespaces and three-stage comparison
 > acceptance remain open. Mark chose to retain CPU inference.
 
-> **23 October rehearsal scope:** Mark requested five questions for his next
-> Codespaces run. The `codex/five-question-codespaces` branch selects q01–q05 for
-> all three prompts (15 scored attempts), retaining the full question bank and
-> separate pilots. See [the run instructions](codespaces-five-question-eval.md).
+> **23 October rehearsal scope:** Mark requested the completed local 20-question
+> run in Codespaces. The existing `codex/five-question-codespaces` branch now defaults
+> to q01–q20 with the improved prompt only, fixed local limits, and no retries or
+> pilots. The local CPU run scored 10/20 in 18 minutes 31 seconds. See
+> [the run instructions](codespaces-five-question-eval.md).
 
 > **22 October decision update:** The AI exercise now uses 20 SQL questions and
 > three scored stages: baseline → prompt improvement → prompt regression. Restore

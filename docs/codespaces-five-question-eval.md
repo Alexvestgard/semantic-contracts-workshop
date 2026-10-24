@@ -1,9 +1,10 @@
-# Run five questions in Codespaces
+# Run the 20-question eval in Codespaces
 
-Create a four-core, 16 GB Codespace from `codex/five-question-codespaces`. This
-branch includes the evaluation stack from PR #7. If you switch an existing
-Codespace to this branch, rebuild its devcontainer before running the evaluation.
-Wait for the normal workshop startup and museum data loading to finish.
+Use branch `codex/five-question-codespaces`. The branch name is unchanged, but its
+default now runs all 20 questions with the improved prompt, matching the latest
+local rehearsal. Use a four-core, 16 GB Codespace and wait for workshop startup
+and museum data loading to finish. Rebuild an existing devcontainer if it predates
+the Docker setup changes on this branch.
 
 From the repository root, run:
 
@@ -11,61 +12,40 @@ From the repository root, run:
 bash scripts/rehearse_sql_eval.sh
 ```
 
-The script builds the isolated images, starts the model, checks all 20 reference
-queries and agent isolation, runs three separate pilots, freezes limits, and runs
-q01–q05 for each prompt: baseline, improved, and regressed. It then compares the
-15 scored attempts, restores the improved prompt, and checks its contract.
-
-Each invocation creates a new `artifacts/sql-eval-five-*` directory and prints its
-path. Logs and partial results are retained if a step fails; later steps stop.
-Do not change the question selection, prompts, model, data, or limits during a run.
-The script leaves the model available for inspection after success or failure.
-
-For the final rejection demonstration, substitute the printed directory below:
-
-```sh
-python3 scripts/sql_eval.py protect --prompt eval/prompts/regressed.json --artifacts artifacts/sql-eval-five-XXXXXX
-```
-
-Expect exit 1 with `Prompt contract failed: missing_text`. This is a declared
-semantic-rule check; it does not demonstrate model accuracy.
-
-When finished, stop the model and keep its downloaded cache:
-
-```sh
-docker compose -p workshop-sql-eval -f compose.models.yaml -f compose.eval.yaml stop model-runner
-```
+The script builds the eval images, starts the CPU model, validates all 20 reference
+queries and agent isolation, runs q01–q20 once with the improved prompt, and scores
+the answers. It then restores and protects the improved prompt and stops only the
+model. The existing database and downloaded model cache are retained.
 
 Each question receives the schema and SQL rules up front. It gets one SQL attempt
-and, if the query succeeds, one final-answer response. Errors end the attempt
-without retries.
+and, if the query succeeds, one final-answer response. There are no retries.
+There are no pilot questions or baseline/regressed stages in this command.
 
-The first model download is about 4.09 GB. The latest local ARM64 CPU run used this
-logic for all 20 questions with the improved prompt: 10/20 correct in 18 minutes
-31 seconds, with seven SQL errors and three incorrect answers. Prompt processing
-accounted for about 70% of inference time. That run used a 4,096-token context,
-384 output tokens, and 271-second request and question limits. This script derives
-its question timeout from new pilots, so its limits and timing may differ.
-Codespaces performance and the revised three-stage sequence remain unmeasured.
+The script copies `eval/rehearsal-budget.json` into a new
+`artifacts/sql-eval-twenty-*` directory. It uses the same execution limits as the
+completed local run: one SQL call, 271 seconds per question and per request,
+384 output tokens, and 20 result rows. The pinned model uses a 4,096-token context
+and four CPU threads. Historical pilot outcomes are not copied into this budget.
 
-To select all 20 questions, run this before starting a new rehearsal:
+The terminal prints progress, the final score, elapsed eval time, and the evidence
+path. That directory retains `improved/` answers and traces, `reports/improved.json`,
+the budget, and a log for each step. A failure stops later steps and preserves
+partial evidence. Do not change the model, prompts, question selection, data, or
+limits during a run.
+
+If a step fails after model startup, stop the model when finished inspecting it:
 
 ```sh
-python3 - <<'PYSELECT'
-import json
-from pathlib import Path
-Path("eval/question-set.json").write_text(
-    json.dumps([f"q{i:02}" for i in range(1, 21)], indent=2) + "\n"
-)
-PYSELECT
+python3 scripts/sql_eval.py stop
 ```
 
-The rehearsal script then runs 60 scored attempts across the three prompts.
-The default selection remains q01–q05. Keep whatever scores the run produces;
-the intended improvement/regression pattern is not yet established.
+The first model download is about 4.09 GB. The completed local ARM64 Docker Desktop
+CPU run scored 10/20 in 18 minutes 31 seconds: seven SQL errors and three wrong
+answers. About 70% of inference time was prompt processing. These are local
+measurements; Codespaces timing and native 16 GB acceptance remain unverified.
 
-If `start` fails, keep `start.log` and the printed evidence directory. The local
-Docker Desktop run encountered a Compose dependency-discovery error; native
-Codespaces startup remains an acceptance check. With multiple workshop databases,
-set `SQL_EVAL_DB_CONTAINER` to the intended existing container before starting.
-See [the evaluation guide](sql-eval.md) for individual commands and constraints.
+If startup fails, keep `start.log` and the printed evidence directory. Local
+Docker Desktop encountered a Compose dependency-discovery error. With multiple
+workshop databases, set `SQL_EVAL_DB_CONTAINER` to the intended existing container.
+See [the evaluation guide](sql-eval.md) for individual commands and the separate
+three-stage teaching sequence.

@@ -128,7 +128,7 @@ def compare_reports(paths):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["build", "start", "prepare-db", "pilot", "freeze", "run", "score", "compare", "revert", "protect", "verify-gold", "isolation"])
+    parser.add_argument("action", choices=["build", "start", "stop", "prepare-db", "pilot", "freeze", "run", "score", "compare", "revert", "protect", "verify-gold", "isolation"])
     parser.add_argument("--stage", choices=["baseline", "improved", "regressed"], default="baseline")
     parser.add_argument("--artifacts", type=Path, default=ROOT / "artifacts/sql-eval")
     parser.add_argument("--prompt", type=Path)
@@ -140,6 +140,8 @@ def main():
         prepare_database()
         compose("up", "-d", "model-init")
         compose("wait", "model-init")
+    elif args.action == "stop":
+        compose("stop", "model-runner")
     elif args.action == "prepare-db":
         prepare_database()
     elif args.action in {"pilot", "run"}:

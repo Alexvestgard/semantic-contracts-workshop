@@ -25,10 +25,10 @@ class QuestionSetTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 select_questions(bank, ids)
 
-    def test_three_stages_run_and_score_only_the_selected_five(self):
+    def test_three_stages_run_and_score_all_twenty(self):
         bank = read_json(ROOT / "eval/questions.json")
         ids = read_json(ROOT / "eval/question-set.json")
-        self.assertEqual(ids, [f"q{i:02}" for i in range(1, 6)])
+        self.assertEqual(ids, [f"q{i:02}" for i in range(1, 21)])
         questions = select_questions(bank, ids)
         references = read_json(ROOT / "eval/gold/answers.json")
         gold = {"answers": {qid: references["answers"][qid] for qid in ids}}
@@ -54,13 +54,13 @@ class QuestionSetTests(unittest.TestCase):
                 self.assertEqual([call.args[0]["id"] for call in attempt.call_args_list], ids)
                 self.assertEqual(sorted(p.stem for p in out.glob("q*.json")), ids)
                 report = score_run(out, questions, gold)
-                self.assertEqual(report["total"], 5)
+                self.assertEqual(report["total"], 20)
                 report_path = root / (stage + ".json")
                 write_json(report_path, report)
                 reports.append(report_path)
-            self.assertIn("These 5 questions", compare_reports(reports))
+            self.assertIn("These 20 questions", compare_reports(reports))
             with self.assertRaisesRegex(ValueError, "Question set changed"):
-                score_run(root / "baseline", bank, references)
+                score_run(root / "baseline", bank[:5], references)
 
 
 class ContainerTests(unittest.TestCase):
