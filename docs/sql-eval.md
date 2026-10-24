@@ -1,17 +1,25 @@
 # Museum SQL evaluation
 
-This exercise uses the existing museum sample and Gemma 4 E2B Q4_K_M in Docker
-Model Runner. It teaches a five-step sequence:
+The default Codespaces command runs all 20 questions once with the improved
+prompt, using the schema-first, single-attempt setup and limits from the latest
+local CPU run:
 
-1. Run a baseline prompt on 20 questions.
-2. Improve the prompt and run the same evaluation.
-3. Make a plausible prompt change and use the evaluation to detect a regression.
-4. Restore the exact improved prompt without another evaluation.
-5. Protect the restored prompt with semantic contracts, without another evaluation.
+```sh
+bash scripts/rehearse_sql_eval.sh
+```
 
-The three scored stages produce 60 attempts. The desired improvement and regression
-are rehearsal goals, not guaranteed scores. Retain every result, including no change.
-The question set is a teaching diagnostic, not a general model benchmark.
+It skips pilots and the baseline/regressed stages. The local run scored 10/20 in
+18 minutes 31 seconds. Mark's Codespaces run scored 13/20 in 516.5 seconds; see
+[the result record](codespaces-eval-results.md). See the
+[20-question Codespaces instructions](codespaces-five-question-eval.md) for setup,
+fixed limits, saved evidence, and cleanup.
+
+The commands below also support the separate five-step teaching sequence: run a
+baseline, improve the prompt, introduce a regression, restore the improved prompt,
+and protect it. With the default q01–q20 selection, three scored stages produce
+60 attempts. Improvement and regression are rehearsal goals, not guaranteed scores.
+Retain every result. This question bank is a teaching diagnostic, not a general
+model benchmark.
 
 ## Setup in Codespaces
 
@@ -50,11 +58,12 @@ Keep the model volume when stopping containers to retain its cache.
 
 Docker Desktop may hide the pinned runner from Compose dependency discovery; the
 known limitation and native Linux target are recorded in [model setup](model-runner.md).
-The Codespaces walkthrough must be checked on native AMD64 before workshop acceptance.
+Mark completed the Codespaces walkthrough. Machine allocation and memory evidence
+remain open acceptance checks; see [the result record](codespaces-eval-results.md).
 
 ## Time pilots, then freeze the limits
 
-Three separate pilot questions establish a starting tool/time budget. They are
+Three separate pilot questions establish a starting time budget. They are
 excluded from the 20 scored questions. Run the improved prompt for the pilot:
 
 ```sh
@@ -63,19 +72,21 @@ python scripts/sql_eval.py freeze
 ```
 
 Freezing requires a completed pilot run, including any failed attempts. It records
-the outcome counts, sets the tool limit to the observed maximum plus three (at least
-six), and sets the question timeout to 1.5 times the slowest pilot (at least 60 seconds). Inspect
+the outcome counts, keeps the tool limit at one query, and sets the question timeout to 1.5 times the slowest pilot (at least 60 seconds). Inspect
 the pilot traces before accepting those limits. Timeouts and invalid SQL are useful
 failures; a perfect pilot is not required. Submission is not a correctness check.
 Limits are identical for all three scored runs.
 
-The initial pilot allows 12 database calls, 180 seconds per question, and a
-45-second request timeout. These are provisional limits, not measured performance.
-The agent gets at most the tool-call limit plus four model turns, so invalid
-responses cannot create an unbounded retry loop. Each SQL statement has a two-second
-database timeout. Tool output is bounded to 20 rows and recent context is bounded.
-The model response uses a JSON schema that permits one schema, query, or final
-action. The application validates the action again before executing a tool.
+The initial pilot allows one database call, 180 seconds per question, and a
+180-second request timeout so initial schema processing is not cut off after 45
+seconds. The remaining question time still caps every request. These are provisional
+limits, not measured performance.
+Each question gets one query response and, if the query succeeds, one final-answer
+response. Separate JSON schemas restrict each phase, and the application checks the
+action again before execution. Failed SQL, malformed responses, and truncated results
+end the attempt without a retry. The scorer still evaluates the submitted answer rows.
+Each SQL statement has a two-second database timeout. Tool output is bounded to 20
+rows. A result that exceeds the observation budget fails instead of being cut off.
 
 ## Run the three scored stages
 
@@ -104,7 +115,7 @@ SQL remains in query-tool traces. No hidden reasoning is requested. Reports show
 timeouts, invalid answers, and wrong results; query errors remain in the traces.
 
 All stages use fresh question contexts and the same model configuration, question
-order, decoding settings, and budget. These settings are recorded as readable values
+order, decoding settings, budget, database context, and action protocol. These settings are recorded as readable values
 and compared directly. Keep the eval code and workshop data unchanged through
 all three runs; the eval does not fingerprint the database. The separate
 `verify-gold` setup check confirms that reference queries agree with the expected
@@ -146,11 +157,14 @@ instruction changes before updating the approved text. No contract-stage accurac
 
 ## Questions and scoring
 
-`eval/questions.json` contains ten basic and ten intermediate questions. They cover
+`eval/questions.json` retains ten basic and ten intermediate questions; this branch
+selects all 20 questions for every scored stage. The full bank covers
 counts, missing text, public-domain flags, departments, sorting, distinct values,
 and joins. Every question specifies its result shape; ambiguous requirements are
-avoided in this first SQL-only exercise. Column comments remain available through
-the schema tool in every stage.
+avoided in this first SQL-only exercise. Column types, comments, and primary/foreign keys are supplied up front in every
+stage. This metadata is read once per stage and saved in its manifest; it contains
+no answer rows or connection credentials. The model can query the existing database
+and submit an answer. It cannot request schema discovery.
 
 The agent submits result values in a final action. For example, a count of 42 is
 `{"action":"final","rows":[[42]]}`. Multiple columns occupy one row in the order the
@@ -185,7 +199,7 @@ It has no gold, scorer, repository mount, Docker socket, file tool, or shell too
 It runs as a non-root user with a read-only root filesystem on an internal network.
 The database role grants SELECT only; the SQL parser rejects writes, multiple
 statements, non-museum tables, row locks, and functions outside a small allowlist.
-Only the controlled schema tool queries catalog metadata.
+Only the runtime metadata reader queries catalogs to prepare the supplied schema.
 
 The eval requirements are `psycopg[binary]`, already used by the workshop, and
 SQLGlot 30.24.0 for SQL parsing. SQLGlot uses the
@@ -215,5 +229,6 @@ project before running these checks.
 The implementation follows Mark's ten-question interview and approved five-stage
 sequence. The 10/10 difficulty split, specific questions, prompt versions, and typed
 contract mechanism are implementation proposals for review. Model smoke tests are
-already recorded in `model-runner.md`; full Codespaces timing and the desired score
-sequence require measured rehearsal evidence. See [the validation record](sql-eval-validation.md).
+already recorded in `model-runner.md`. The improved-only Codespaces run is recorded
+in [the result summary](codespaces-eval-results.md); the three-stage score sequence
+and resource acceptance checks remain open. See [the validation record](sql-eval-validation.md).

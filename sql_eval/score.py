@@ -6,7 +6,7 @@ from decimal import Decimal
 import os
 from pathlib import Path
 
-from .common import dumps, read_json, validate_rows, write_json
+from .common import dumps, read_json, select_questions, validate_rows, write_json
 from .database import Database
 
 
@@ -93,8 +93,10 @@ def main():
     if args.verify_gold:
         db = Database(os.environ["EVAL_DSN"])
         verify_gold(db, questions, gold)
-        print("All 20 reference queries agree with independent source-derived answers.")
+        print(f"All {len(questions)} reference queries agree with independent source-derived answers.")
     else:
+        questions = select_questions(questions, read_json("eval/question-set.json"))
+        gold = {"answers": {q["id"]: gold["answers"][q["id"]] for q in questions}}
         report = score_run(args.run, questions, gold)
         write_json(args.out, report)
         print(f"{report['stage']}: {report['correct']}/{report['total']}")

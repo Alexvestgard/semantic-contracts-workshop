@@ -1,5 +1,20 @@
 # Semantic contracts workshop: review proposal
 
+> **23 October context update:** Mark requested the connected database, full schema,
+> and supported SQL operations in the initial prompt. The agent now starts with an
+> answer query; schema discovery actions are removed. All three stages receive the
+> same context, recorded in their manifests. The revised improved prompt answered
+> all five correctly in 3 minutes 38 seconds locally; the first question took
+> 130 seconds and subsequent questions took 19–25 seconds. The request timeout
+> also increased for this diagnostic. Native Codespaces and three-stage comparison
+> acceptance remain open. Mark chose to retain CPU inference.
+
+> **23 October rehearsal scope:** Mark requested the completed local 20-question
+> run in Codespaces. The existing `codex/five-question-codespaces` branch now defaults
+> to q01–q20 with the improved prompt only, fixed local limits, and no retries or
+> pilots. The local CPU run scored 10/20 in 18 minutes 31 seconds. See
+> [the run instructions](codespaces-five-question-eval.md).
+
 > **22 October decision update:** The AI exercise now uses 20 SQL questions and
 > three scored stages: baseline → prompt improvement → prompt regression. Restore
 > the improved prompt, then protect its semantic requirements; neither final step

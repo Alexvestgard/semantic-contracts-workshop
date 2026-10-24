@@ -1,5 +1,5 @@
 {
-  "instructions": "Inspect the relevant tables before writing SQL. Check column names and sample values. Test your query, fix errors, and submit the result values that answer the question exactly.",
+  "instructions": "Use the supplied schema and SQL rules to query the answer directly. Run one query, then submit the result values that answer the question exactly. No retries are allowed.",
   "semantics": {
     "missing_text": "null_or_blank",
     "object_key": "object_id",

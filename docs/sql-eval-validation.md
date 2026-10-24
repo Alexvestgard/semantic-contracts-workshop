@@ -1,5 +1,10 @@
 # SQL eval validation
 
+> Update, 23 October: the improved-only 20-question Codespaces rehearsal completed
+> with 13/20 correct in 516.5 seconds. See [the current result record](codespaces-eval-results.md).
+> The sections below preserve earlier validation history; their pending-rehearsal
+> statements predate this run. Three-stage and resource acceptance remain open.
+
 The evaluation harness is implemented and locally tested. Workshop acceptance still
 requires the three scored runs in a fresh four-core, 16 GB Codespace. No baseline,
 improvement, or regression score is claimed in this record.

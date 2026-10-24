@@ -27,6 +27,18 @@ class DatabaseIntegrationTests(unittest.TestCase):
         self.assertEqual(len(result["rows"]), 3)
         self.assertTrue(result["truncated"])
 
+    def test_upfront_context_contains_schema_types_and_keys_without_credentials(self):
+        context = self.db.context()
+        self.assertIn("PostgreSQL database: postgres", context)
+        self.assertIn("object_id integer", context)
+        self.assertIn("is_public_domain boolean", context)
+        self.assertIn("PRIMARY KEY (object_id)", context)
+        self.assertEqual(context.count("PRIMARY KEY (object_id)"), 8)
+        self.assertIn("one SELECT", context)
+        self.assertNotIn(self.dsn, context)
+        for table in self.db.schema()["tables"]:
+            self.assertIn(table + ":", context)
+
     def test_role_blocks_writes_even_without_parser(self):
         with psycopg.connect(self.dsn) as conn:
             with self.assertRaises(psycopg.errors.ReadOnlySqlTransaction):

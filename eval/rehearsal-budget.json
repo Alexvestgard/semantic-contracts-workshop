@@ -1,0 +1,10 @@
+{
+  "status": "frozen",
+  "max_tool_calls": 1,
+  "question_timeout_seconds": 271,
+  "request_timeout_seconds": 271,
+  "max_output_tokens": 384,
+  "tool_row_limit": 20,
+  "history_characters": 6500,
+  "observation_characters": 3000
+}

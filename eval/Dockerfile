@@ -8,14 +8,14 @@ FROM base AS runner
 COPY sql_eval/__init__.py sql_eval/common.py sql_eval/database.py sql_eval/prompts.py sql_eval/agent.py sql_eval/run.py /app/sql_eval/
 COPY scripts/model_client.py /app/scripts/model_client.py
 COPY models/gemma.lock.json /app/models/gemma.lock.json
-COPY eval/questions.json eval/pilots.json /app/eval/
+COPY eval/questions.json eval/question-set.json eval/pilots.json /app/eval/
 COPY eval/prompts /app/eval/prompts
 USER 1000:1000
 ENTRYPOINT ["python", "-m", "sql_eval.run"]
 
 FROM base AS scorer
 COPY sql_eval/__init__.py sql_eval/common.py sql_eval/database.py sql_eval/score.py /app/sql_eval/
-COPY eval/questions.json /app/eval/questions.json
+COPY eval/questions.json eval/question-set.json /app/eval/
 COPY eval/gold /app/eval/gold
 USER 1000:1000
 ENTRYPOINT ["python", "-m", "sql_eval.score"]
