@@ -1,0 +1,19 @@
+{
+  "date_utc": "2026-10-25",
+  "base_commit": "89625826fab2cae3a5d08366b5164c3c789e4f24",
+  "sha256": {
+    "data_contract_components/contract_definition/object_images_contract_spec.json": "fe1c2806dafbcd7c52c7bb123b37b86afce2baa84245d5275471bbc367dff1c9",
+    "models/gemma.lock.json": "ed94c17ac0b0c9adac029b13f6173f181ec2bc389197250a12ddc2bf318fdfa9",
+    "data_contract_components/data_assets/db_migrations/raw_data/objects.json": "10eae3d1e7d8186e24dae68b4c783a7f5f841317f37ec9eb64ebf20527fd80cb",
+    "vendor/linked-art/guidance/manifest.json": "fc8455deabd4d4054ddf0f11ee748b5264dfa89bd623ad57d9dcca2b775ed844",
+    "vendor/linked-art/guidance/recommended-vocabulary.md": "28d46804c01cd397a62b7248fdcd54c9a1c6eaf2d6fef977bfc13d0680363fe4",
+    "sql_eval/agent.py": "8c8379c99e302ac2735437ee6d2d645327b13ccd00effc70b20ffa7c9038e2dd",
+    "sql_eval/database.py": "04d316406dca796640834a62f672ea2db655870ef3f51bfc871081c04f3027f5",
+    "sql_eval/prompts.py": "83ccae2c56c511ace60d5969ef86aa4d62d7ed39d8c444dec862a32de1a55898",
+    "sql_eval/run.py": "d36adaae762deadb813dedc71bf77f84560b493ff5b2d49f156a66dc981248c2",
+    "sql_eval/score.py": "dac38c01c39d7f7a1a58d1010af44a2e4380268036bc46a5b82e7261ad06c205",
+    "scripts/build_category_eval.py": "e6b92d0e704c1c094147642d4bc6649c1b79932831dcf8a3f8711d4a9908d13e",
+    "scripts/run_category_eval.py": "fe11a71c92a7886ecb6d15325f3e6afbe9b089d817f296d19d2225430dd17bec",
+    "scripts/check_prompt_map.py": "1dcebd561df49f1c50469a9d04963da3e785ed9ba667b1036dca6441ac68712f"
+  }
+}

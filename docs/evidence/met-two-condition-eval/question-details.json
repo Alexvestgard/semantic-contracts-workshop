@@ -1,0 +1,2358 @@
+{
+  "prompt-only": [
+    {
+      "id": "q01",
+      "question": "How many artworks are in the museum sample? Return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          3025
+        ]
+      ],
+      "submitted": [
+        [
+          3025
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              3025
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 31,
+          "prompt_tokens": 2113,
+          "total_tokens": 2144,
+          "prompt_tokens_details": {
+            "cached_tokens": 1
+          }
+        },
+        {
+          "completion_tokens": 20,
+          "prompt_tokens": 2168,
+          "total_tokens": 2188,
+          "prompt_tokens_details": {
+            "cached_tokens": 2089
+          }
+        }
+      ],
+      "elapsed_seconds": 29.277
+    },
+    {
+      "id": "q02",
+      "question": "How many artworks have a populated artist name? NULL, empty, and whitespace-only names are missing. Return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          2068
+        ]
+      ],
+      "submitted": [
+        [
+          2068
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 WHERE T1.artist_display_name IS NOT NULL AND TRIM(T1.artist_display_name) != '' AND TRIM(T1.artist_display_name) != '';"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              2068
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 71,
+          "prompt_tokens": 2125,
+          "total_tokens": 2196,
+          "prompt_tokens_details": {
+            "cached_tokens": 2073
+          }
+        },
+        {
+          "completion_tokens": 20,
+          "prompt_tokens": 2220,
+          "total_tokens": 2240,
+          "prompt_tokens_details": {
+            "cached_tokens": 2101
+          }
+        }
+      ],
+      "elapsed_seconds": 6.298
+    },
+    {
+      "id": "q03",
+      "question": "How many artworks have a missing artist name? Include NULL, empty, and whitespace-only names. Return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          957
+        ]
+      ],
+      "submitted": [
+        [
+          957
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 LEFT JOIN public.object_history AS T2 ON T1.object_id = T2.object_id WHERE T1.artist_display_name IS NULL OR TRIM(T1.artist_display_name) = ''"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              957
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 80,
+          "prompt_tokens": 2124,
+          "total_tokens": 2204,
+          "prompt_tokens_details": {
+            "cached_tokens": 2075
+          }
+        },
+        {
+          "completion_tokens": 19,
+          "prompt_tokens": 2227,
+          "total_tokens": 2246,
+          "prompt_tokens_details": {
+            "cached_tokens": 2100
+          }
+        }
+      ],
+      "elapsed_seconds": 6.754
+    },
+    {
+      "id": "q04",
+      "question": "How many artworks are explicitly marked as public domain? Return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          1985
+        ]
+      ],
+      "submitted": [
+        [
+          1985
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_copyright AS T2 ON T1.object_id = T2.object_id WHERE T2.is_public_domain = TRUE"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              1985
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 66,
+          "prompt_tokens": 2114,
+          "total_tokens": 2180,
+          "prompt_tokens_details": {
+            "cached_tokens": 2073
+          }
+        },
+        {
+          "completion_tokens": 20,
+          "prompt_tokens": 2204,
+          "total_tokens": 2224,
+          "prompt_tokens_details": {
+            "cached_tokens": 2090
+          }
+        }
+      ],
+      "elapsed_seconds": 5.926
+    },
+    {
+      "id": "q05",
+      "question": "How many artworks have a populated primary image URL? NULL, empty, and whitespace-only URLs are missing. Return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          1985
+        ]
+      ],
+      "submitted": [
+        [
+          1985
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_images AS T2 ON T1.object_id = T2.object_id WHERE T2.primary_image IS NOT NULL AND TRIM(T2.primary_image) != '' AND TRIM(T2.primary_image) != '';"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              1985
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 89,
+          "prompt_tokens": 2126,
+          "total_tokens": 2215,
+          "prompt_tokens_details": {
+            "cached_tokens": 2073
+          }
+        },
+        {
+          "completion_tokens": 20,
+          "prompt_tokens": 2239,
+          "total_tokens": 2259,
+          "prompt_tokens_details": {
+            "cached_tokens": 2102
+          }
+        }
+      ],
+      "elapsed_seconds": 7.329
+    },
+    {
+      "id": "q06",
+      "question": "How many artworks have no populated primary image URL? Include NULL, empty, and whitespace-only URLs. Return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          1040
+        ]
+      ],
+      "submitted": [
+        [
+          1040
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_images AS T2 ON T1.object_id = T2.object_id WHERE T2.primary_image IS NULL OR TRIM(T2.primary_image) = '';"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              1040
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 76,
+          "prompt_tokens": 2125,
+          "total_tokens": 2201,
+          "prompt_tokens_details": {
+            "cached_tokens": 2074
+          }
+        },
+        {
+          "completion_tokens": 20,
+          "prompt_tokens": 2225,
+          "total_tokens": 2245,
+          "prompt_tokens_details": {
+            "cached_tokens": 2101
+          }
+        }
+      ],
+      "elapsed_seconds": 6.521
+    },
+    {
+      "id": "q07",
+      "question": "How many artworks belong to the Asian Art department? Return one count.",
+      "correct": false,
+      "status": "query_error",
+      "expected": [
+        [
+          240
+        ]
+      ],
+      "submitted": null,
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_gallery_info AS T2 ON T1.object_id = T2.object_id WHERE T2.department = 'Asian Art'}```json_action_result{"
+      ],
+      "observations": [],
+      "errors": [
+        "Could not parse the PostgreSQL query."
+      ],
+      "finish_reasons": [
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 76,
+          "prompt_tokens": 2114,
+          "total_tokens": 2190,
+          "prompt_tokens_details": {
+            "cached_tokens": 2073
+          }
+        }
+      ],
+      "elapsed_seconds": 4.545
+    },
+    {
+      "id": "q08",
+      "question": "How many artworks have a populated classification? NULL, empty, and whitespace-only classifications are missing. Return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          1568
+        ]
+      ],
+      "submitted": [
+        [
+          1568
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_physical_properties AS T2 ON T1.object_id = T2.object_id WHERE T2.classification IS NOT NULL AND TRIM(T2.classification) != '' AND TRIM(T2.classification) != '';"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              1568
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 85,
+          "prompt_tokens": 2124,
+          "total_tokens": 2209,
+          "prompt_tokens_details": {
+            "cached_tokens": 2073
+          }
+        },
+        {
+          "completion_tokens": 20,
+          "prompt_tokens": 2233,
+          "total_tokens": 2253,
+          "prompt_tokens_details": {
+            "cached_tokens": 2100
+          }
+        }
+      ],
+      "elapsed_seconds": 7.344
+    },
+    {
+      "id": "q09",
+      "question": "Return object ID and title for the five artworks with the smallest object IDs, in ascending ID order.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          35,
+          "The Adams Vase"
+        ],
+        [
+          200,
+          "Spindle-back armchair"
+        ],
+        [
+          214,
+          "Armchair"
+        ],
+        [
+          237,
+          "Armchair"
+        ],
+        [
+          282,
+          "Autumn Landscape"
+        ]
+      ],
+      "submitted": [
+        [
+          35,
+          "The Adams Vase"
+        ],
+        [
+          200,
+          "Spindle-back armchair"
+        ],
+        [
+          214,
+          "Armchair"
+        ],
+        [
+          237,
+          "Armchair"
+        ],
+        [
+          282,
+          "Autumn Landscape"
+        ]
+      ],
+      "sql": [
+        "SELECT T1.object_id, T1.title FROM public.object AS T1 ORDER BY T1.object_id LIMIT 5"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "object_id",
+            "title"
+          ],
+          "rows": [
+            [
+              35,
+              "The Adams Vase"
+            ],
+            [
+              200,
+              "Spindle-back armchair"
+            ],
+            [
+              214,
+              "Armchair"
+            ],
+            [
+              237,
+              "Armchair"
+            ],
+            [
+              282,
+              "Autumn Landscape"
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 44,
+          "prompt_tokens": 2120,
+          "total_tokens": 2164,
+          "prompt_tokens_details": {
+            "cached_tokens": 2070
+          }
+        },
+        {
+          "completion_tokens": 62,
+          "prompt_tokens": 2236,
+          "total_tokens": 2298,
+          "prompt_tokens_details": {
+            "cached_tokens": 2096
+          }
+        }
+      ],
+      "elapsed_seconds": 7.295
+    },
+    {
+      "id": "q10",
+      "question": "How many artworks have a populated culture? NULL, empty, and whitespace-only culture values are missing. Return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          1392
+        ]
+      ],
+      "submitted": [
+        [
+          1392
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_history AS T2 ON T1.object_id = T2.object_id WHERE T2.culture IS NOT NULL AND TRIM(T2.culture) != '' AND TRIM(T2.culture) != '';"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              1392
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 83,
+          "prompt_tokens": 2125,
+          "total_tokens": 2208,
+          "prompt_tokens_details": {
+            "cached_tokens": 2070
+          }
+        },
+        {
+          "completion_tokens": 20,
+          "prompt_tokens": 2232,
+          "total_tokens": 2252,
+          "prompt_tokens_details": {
+            "cached_tokens": 2101
+          }
+        }
+      ],
+      "elapsed_seconds": 6.989
+    },
+    {
+      "id": "q11",
+      "question": "Using object_physical_properties.classification, how many sculptures are in the sample? Count each object_id once and return one count.",
+      "correct": false,
+      "status": "submitted",
+      "expected": [
+        [
+          296
+        ]
+      ],
+      "submitted": [
+        [
+          0
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object_physical_properties AS T1 WHERE T1.classification = 'Sculptures';"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              0
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 46,
+          "prompt_tokens": 2128,
+          "total_tokens": 2174,
+          "prompt_tokens_details": {
+            "cached_tokens": 2070
+          }
+        },
+        {
+          "completion_tokens": 17,
+          "prompt_tokens": 2195,
+          "total_tokens": 2212,
+          "prompt_tokens_details": {
+            "cached_tokens": 2104
+          }
+        }
+      ],
+      "elapsed_seconds": 5.262
+    },
+    {
+      "id": "q12",
+      "question": "Using object_physical_properties.classification, how many paintings are in the sample? Count each object_id once and return one count.",
+      "correct": false,
+      "status": "query_error",
+      "expected": [
+        [
+          353
+        ]
+      ],
+      "submitted": null,
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM object_physical_properties AS T1 WHERE T1.classification = 'Paintings'}```json_result{"
+      ],
+      "observations": [],
+      "errors": [
+        "Could not parse the PostgreSQL query."
+      ],
+      "finish_reasons": [
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 50,
+          "prompt_tokens": 2128,
+          "total_tokens": 2178,
+          "prompt_tokens_details": {
+            "cached_tokens": 2081
+          }
+        }
+      ],
+      "elapsed_seconds": 3.447
+    },
+    {
+      "id": "q13",
+      "question": "Using object_physical_properties.classification, how many drawings are in the sample? Count each object_id once and return one count.",
+      "correct": false,
+      "status": "submitted",
+      "expected": [
+        [
+          113
+        ]
+      ],
+      "submitted": [
+        [
+          0
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object_physical_properties AS T1 WHERE TRIM(T1.classification) = 'drawings';"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              0
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 48,
+          "prompt_tokens": 2128,
+          "total_tokens": 2176,
+          "prompt_tokens_details": {
+            "cached_tokens": 2081
+          }
+        },
+        {
+          "completion_tokens": 17,
+          "prompt_tokens": 2197,
+          "total_tokens": 2214,
+          "prompt_tokens_details": {
+            "cached_tokens": 2104
+          }
+        }
+      ],
+      "elapsed_seconds": 4.948
+    },
+    {
+      "id": "q14",
+      "question": "Using object_physical_properties.classification, how many prints are in the sample? Count each object_id once and return one count.",
+      "correct": false,
+      "status": "query_error",
+      "expected": [
+        [
+          55
+        ]
+      ],
+      "submitted": null,
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM object_physical_properties AS T1 WHERE T1.classification = 'prints'}```json_action_result:{"
+      ],
+      "observations": [],
+      "errors": [
+        "Could not parse the PostgreSQL query."
+      ],
+      "finish_reasons": [
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 50,
+          "prompt_tokens": 2128,
+          "total_tokens": 2178,
+          "prompt_tokens_details": {
+            "cached_tokens": 2081
+          }
+        }
+      ],
+      "elapsed_seconds": 3.389
+    },
+    {
+      "id": "q15",
+      "question": "Using object_physical_properties.classification, how many furniture objects are in the sample? Count each object_id once and return one count.",
+      "correct": false,
+      "status": "query_error",
+      "expected": [
+        [
+          23
+        ]
+      ],
+      "submitted": null,
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM object_physical_properties AS T1 WHERE T1.classification = 'furniture'}```json_action_result{"
+      ],
+      "observations": [],
+      "errors": [
+        "Could not parse the PostgreSQL query."
+      ],
+      "finish_reasons": [
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 49,
+          "prompt_tokens": 2129,
+          "total_tokens": 2178,
+          "prompt_tokens_details": {
+            "cached_tokens": 2081
+          }
+        }
+      ],
+      "elapsed_seconds": 2.929
+    },
+    {
+      "id": "q16",
+      "question": "Using object_physical_properties.classification, how many architectural objects are in the sample? Count each object_id once and return one count.",
+      "correct": false,
+      "status": "submitted",
+      "expected": [
+        [
+          13
+        ]
+      ],
+      "submitted": [
+        [
+          0
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object_physical_properties AS T1 WHERE TRIM(T1.classification) LIKE '%architectural%'"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              0
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 48,
+          "prompt_tokens": 2129,
+          "total_tokens": 2177,
+          "prompt_tokens_details": {
+            "cached_tokens": 2081
+          }
+        },
+        {
+          "completion_tokens": 17,
+          "prompt_tokens": 2198,
+          "total_tokens": 2215,
+          "prompt_tokens_details": {
+            "cached_tokens": 2105
+          }
+        }
+      ],
+      "elapsed_seconds": 4.963
+    },
+    {
+      "id": "q17",
+      "question": "Using object_physical_properties.classification, return only the object IDs of the five sculptures with the smallest object IDs, sorted by object ID ascending.",
+      "correct": false,
+      "status": "submitted",
+      "expected": [
+        [
+          37397
+        ],
+        [
+          38124
+        ],
+        [
+          38127
+        ],
+        [
+          38133
+        ],
+        [
+          38146
+        ]
+      ],
+      "submitted": [],
+      "sql": [
+        "SELECT object_id FROM object_physical_properties WHERE classification = 'sculptures' ORDER BY object_id ASC LIMIT 5"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "object_id"
+          ],
+          "rows": [],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 41,
+          "prompt_tokens": 2130,
+          "total_tokens": 2171,
+          "prompt_tokens_details": {
+            "cached_tokens": 2079
+          }
+        },
+        {
+          "completion_tokens": 14,
+          "prompt_tokens": 2192,
+          "total_tokens": 2206,
+          "prompt_tokens_details": {
+            "cached_tokens": 2106
+          }
+        }
+      ],
+      "elapsed_seconds": 4.046
+    },
+    {
+      "id": "q18",
+      "question": "Using object_physical_properties.classification, return only the object IDs of the five architectural objects with the smallest object IDs, sorted by object ID ascending.",
+      "correct": false,
+      "status": "submitted",
+      "expected": [
+        [
+          199003
+        ],
+        [
+          202115
+        ],
+        [
+          205351
+        ],
+        [
+          311294
+        ],
+        [
+          313697
+        ]
+      ],
+      "submitted": [],
+      "sql": [
+        "SELECT object_id FROM object_physical_properties WHERE classification = 'architectural' ORDER BY object_id ASC LIMIT 5"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "object_id"
+          ],
+          "rows": [],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 40,
+          "prompt_tokens": 2131,
+          "total_tokens": 2171,
+          "prompt_tokens_details": {
+            "cached_tokens": 2087
+          }
+        },
+        {
+          "completion_tokens": 14,
+          "prompt_tokens": 2192,
+          "total_tokens": 2206,
+          "prompt_tokens_details": {
+            "cached_tokens": 2107
+          }
+        }
+      ],
+      "elapsed_seconds": 4.194
+    },
+    {
+      "id": "q19",
+      "question": "Using object_physical_properties.classification, return only the object IDs of the five paintings with the smallest object IDs, sorted by object ID ascending.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          36029
+        ],
+        [
+          36131
+        ],
+        [
+          36451
+        ],
+        [
+          36457
+        ],
+        [
+          37788
+        ]
+      ],
+      "submitted": [
+        [
+          36029
+        ],
+        [
+          36131
+        ],
+        [
+          36451
+        ],
+        [
+          36457
+        ],
+        [
+          37788
+        ]
+      ],
+      "sql": [
+        "SELECT object_id FROM object_physical_properties WHERE classification = 'Paintings' ORDER BY object_id ASC LIMIT 5"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "object_id"
+          ],
+          "rows": [
+            [
+              36029
+            ],
+            [
+              36131
+            ],
+            [
+              36451
+            ],
+            [
+              36457
+            ],
+            [
+              37788
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 40,
+          "prompt_tokens": 2130,
+          "total_tokens": 2170,
+          "prompt_tokens_details": {
+            "cached_tokens": 2087
+          }
+        },
+        {
+          "completion_tokens": 49,
+          "prompt_tokens": 2225,
+          "total_tokens": 2274,
+          "prompt_tokens_details": {
+            "cached_tokens": 2106
+          }
+        }
+      ],
+      "elapsed_seconds": 6.069
+    },
+    {
+      "id": "q20",
+      "question": "Using object_physical_properties.classification, return only the object IDs of the five furniture objects with the smallest object IDs, sorted by object ID ascending.",
+      "correct": false,
+      "status": "submitted",
+      "expected": [
+        [
+          194622
+        ],
+        [
+          195456
+        ],
+        [
+          195473
+        ],
+        [
+          198715
+        ],
+        [
+          202141
+        ]
+      ],
+      "submitted": [],
+      "sql": [
+        "SELECT object_id FROM object_physical_properties WHERE classification = 'furniture' ORDER BY object_id ASC LIMIT 5"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "object_id"
+          ],
+          "rows": [],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 39,
+          "prompt_tokens": 2131,
+          "total_tokens": 2170,
+          "prompt_tokens_details": {
+            "cached_tokens": 2087
+          }
+        },
+        {
+          "completion_tokens": 14,
+          "prompt_tokens": 2191,
+          "total_tokens": 2205,
+          "prompt_tokens_details": {
+            "cached_tokens": 2107
+          }
+        }
+      ],
+      "elapsed_seconds": 4.468
+    }
+  ],
+  "prompt-map-linked-art": [
+    {
+      "id": "q01",
+      "question": "How many artworks are in the museum sample? Return one count.",
+      "correct": false,
+      "status": "query_error",
+      "expected": [
+        [
+          3025
+        ]
+      ],
+      "submitted": null,
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 WHERE (LOWER(TRIM(T1.classification)) IN ('bark-sculpture', 'beads-sculpture', 'bone/ivory-sculpture', 'ceramics-sculpture', 'metal-sculpture', 'sculpture', 'sculpture-alabaster', 'sculpture-architectural', 'sculpture-architectural-stone', 'sculpture-bronze', 'sculpture-ceramics', 'sculpture-miniature', 'sculpture-stone', 'sculpture-wood', 'stone sculpture', 'stone-sculpture', 'wood-sculpture')) OR (LOWER(TRIM(T1.classification)) IN ('miscellaneous-paintings', 'paintings', 'paintings-fresco', 'paintings-panels')) OR (LOWER(TRIM(T1.classification)) IN ('drawings')) OR (LOWER(TRIM(T1.classification)) IN ('prints')) OR (LOWER(TRIM(T1.classification)) IN ('furniture', 'furniture-wood', 'wood-furniture', 'woodwork-furniture')) OR (LOWER(TRIM(T1.classification)) IN ('sculpture-architectural', 'sculpture-architectural-stone', 'wood-architectural')) GROUP BY T1.classification"
+      ],
+      "observations": [],
+      "errors": [
+        "column t1.classification does not exist\nLINE 1: ...ct_id) FROM public.object AS T1 WHERE (LOWER(TRIM(T1.classif...\n                                                             ^"
+      ],
+      "finish_reasons": [
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 322,
+          "prompt_tokens": 2761,
+          "total_tokens": 3083,
+          "prompt_tokens_details": {
+            "cached_tokens": 1
+          }
+        }
+      ],
+      "elapsed_seconds": 48.094
+    },
+    {
+      "id": "q02",
+      "question": "How many artworks have a populated artist name? NULL, empty, and whitespace-only names are missing. Return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          2068
+        ]
+      ],
+      "submitted": [
+        [
+          2068
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 WHERE T1.artist_display_name IS NOT NULL AND TRIM(T1.artist_display_name) != '' AND TRIM(T1.artist_display_name) != '';"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              2068
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 71,
+          "prompt_tokens": 2773,
+          "total_tokens": 2844,
+          "prompt_tokens_details": {
+            "cached_tokens": 1
+          }
+        },
+        {
+          "completion_tokens": 20,
+          "prompt_tokens": 2868,
+          "total_tokens": 2888,
+          "prompt_tokens_details": {
+            "cached_tokens": 2749
+          }
+        }
+      ],
+      "elapsed_seconds": 37.479
+    },
+    {
+      "id": "q03",
+      "question": "How many artworks have a missing artist name? Include NULL, empty, and whitespace-only names. Return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          957
+        ]
+      ],
+      "submitted": [
+        [
+          957
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 WHERE T1.artist_display_name IS NULL OR TRIM(T1.artist_display_name) = '';"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              957
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 56,
+          "prompt_tokens": 2772,
+          "total_tokens": 2828,
+          "prompt_tokens_details": {
+            "cached_tokens": 2723
+          }
+        },
+        {
+          "completion_tokens": 19,
+          "prompt_tokens": 2851,
+          "total_tokens": 2870,
+          "prompt_tokens_details": {
+            "cached_tokens": 2748
+          }
+        }
+      ],
+      "elapsed_seconds": 5.239
+    },
+    {
+      "id": "q04",
+      "question": "How many artworks are explicitly marked as public domain? Return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          1985
+        ]
+      ],
+      "submitted": [
+        [
+          1985
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_copyright AS T2 ON T1.object_id = T2.object_id WHERE T2.is_public_domain = TRUE"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              1985
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 66,
+          "prompt_tokens": 2762,
+          "total_tokens": 2828,
+          "prompt_tokens_details": {
+            "cached_tokens": 2721
+          }
+        },
+        {
+          "completion_tokens": 20,
+          "prompt_tokens": 2852,
+          "total_tokens": 2872,
+          "prompt_tokens_details": {
+            "cached_tokens": 2738
+          }
+        }
+      ],
+      "elapsed_seconds": 5.835
+    },
+    {
+      "id": "q05",
+      "question": "How many artworks have a populated primary image URL? NULL, empty, and whitespace-only URLs are missing. Return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          1985
+        ]
+      ],
+      "submitted": [
+        [
+          1985
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_images AS T2 ON T1.object_id = T2.object_id WHERE T2.primary_image IS NOT NULL AND TRIM(T2.primary_image) != ''"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              1985
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 77,
+          "prompt_tokens": 2774,
+          "total_tokens": 2851,
+          "prompt_tokens_details": {
+            "cached_tokens": 2721
+          }
+        },
+        {
+          "completion_tokens": 20,
+          "prompt_tokens": 2875,
+          "total_tokens": 2895,
+          "prompt_tokens_details": {
+            "cached_tokens": 2750
+          }
+        }
+      ],
+      "elapsed_seconds": 7.011
+    },
+    {
+      "id": "q06",
+      "question": "How many artworks have no populated primary image URL? Include NULL, empty, and whitespace-only URLs. Return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          1040
+        ]
+      ],
+      "submitted": [
+        [
+          1040
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_images AS T2 ON T1.object_id = T2.object_id WHERE T2.primary_image IS NULL OR TRIM(T2.primary_image) = '';"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              1040
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 76,
+          "prompt_tokens": 2773,
+          "total_tokens": 2849,
+          "prompt_tokens_details": {
+            "cached_tokens": 2722
+          }
+        },
+        {
+          "completion_tokens": 20,
+          "prompt_tokens": 2873,
+          "total_tokens": 2893,
+          "prompt_tokens_details": {
+            "cached_tokens": 2749
+          }
+        }
+      ],
+      "elapsed_seconds": 6.309
+    },
+    {
+      "id": "q07",
+      "question": "How many artworks belong to the Asian Art department? Return one count.",
+      "correct": false,
+      "status": "query_error",
+      "expected": [
+        [
+          240
+        ]
+      ],
+      "submitted": null,
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_gallery_info AS T2 ON T1.object_id = T2.object_id WHERE T2.department = 'Asian Art'}```json_action_result:{"
+      ],
+      "observations": [],
+      "errors": [
+        "Could not parse the PostgreSQL query."
+      ],
+      "finish_reasons": [
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 75,
+          "prompt_tokens": 2762,
+          "total_tokens": 2837,
+          "prompt_tokens_details": {
+            "cached_tokens": 2721
+          }
+        }
+      ],
+      "elapsed_seconds": 4.224
+    },
+    {
+      "id": "q08",
+      "question": "How many artworks have a populated classification? NULL, empty, and whitespace-only classifications are missing. Return one count.",
+      "correct": false,
+      "status": "query_error",
+      "expected": [
+        [
+          1568
+        ]
+      ],
+      "submitted": null,
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 WHERE NULLIF(BTRIM(T1.classification), '') IS NOT NULL"
+      ],
+      "observations": [],
+      "errors": [
+        "column t1.classification does not exist\nLINE 1: ...t_id) FROM public.object AS T1 WHERE NULLIF(BTRIM(T1.classif...\n                                                             ^"
+      ],
+      "finish_reasons": [
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 48,
+          "prompt_tokens": 2772,
+          "total_tokens": 2820,
+          "prompt_tokens_details": {
+            "cached_tokens": 2721
+          }
+        }
+      ],
+      "elapsed_seconds": 2.992
+    },
+    {
+      "id": "q09",
+      "question": "Return object ID and title for the five artworks with the smallest object IDs, in ascending ID order.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          35,
+          "The Adams Vase"
+        ],
+        [
+          200,
+          "Spindle-back armchair"
+        ],
+        [
+          214,
+          "Armchair"
+        ],
+        [
+          237,
+          "Armchair"
+        ],
+        [
+          282,
+          "Autumn Landscape"
+        ]
+      ],
+      "submitted": [
+        [
+          35,
+          "The Adams Vase"
+        ],
+        [
+          200,
+          "Spindle-back armchair"
+        ],
+        [
+          214,
+          "Armchair"
+        ],
+        [
+          237,
+          "Armchair"
+        ],
+        [
+          282,
+          "Autumn Landscape"
+        ]
+      ],
+      "sql": [
+        "SELECT T1.object_id, T1.title FROM object AS T1 ORDER BY T1.object_id LIMIT 5"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "object_id",
+            "title"
+          ],
+          "rows": [
+            [
+              35,
+              "The Adams Vase"
+            ],
+            [
+              200,
+              "Spindle-back armchair"
+            ],
+            [
+              214,
+              "Armchair"
+            ],
+            [
+              237,
+              "Armchair"
+            ],
+            [
+              282,
+              "Autumn Landscape"
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 42,
+          "prompt_tokens": 2768,
+          "total_tokens": 2810,
+          "prompt_tokens_details": {
+            "cached_tokens": 2718
+          }
+        },
+        {
+          "completion_tokens": 62,
+          "prompt_tokens": 2882,
+          "total_tokens": 2944,
+          "prompt_tokens_details": {
+            "cached_tokens": 2744
+          }
+        }
+      ],
+      "elapsed_seconds": 7.438
+    },
+    {
+      "id": "q10",
+      "question": "How many artworks have a populated culture? NULL, empty, and whitespace-only culture values are missing. Return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          1392
+        ]
+      ],
+      "submitted": [
+        [
+          1392
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_history AS T2 ON T1.object_id = T2.object_id WHERE T2.culture IS NOT NULL AND TRIM(T2.culture) <> ''"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              1392
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 73,
+          "prompt_tokens": 2773,
+          "total_tokens": 2846,
+          "prompt_tokens_details": {
+            "cached_tokens": 2718
+          }
+        },
+        {
+          "completion_tokens": 20,
+          "prompt_tokens": 2870,
+          "total_tokens": 2890,
+          "prompt_tokens_details": {
+            "cached_tokens": 2749
+          }
+        }
+      ],
+      "elapsed_seconds": 7.505
+    },
+    {
+      "id": "q11",
+      "question": "Using object_physical_properties.classification, how many sculptures are in the sample? Count each object_id once and return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          296
+        ]
+      ],
+      "submitted": [
+        [
+          296
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_physical_properties AS T2 ON T1.object_id = T2.object_id WHERE T2.classification IN ('Bark-Sculpture', 'Beads-Sculpture', 'Bone/Ivory-Sculpture', 'Ceramics-Sculpture', 'Metal-Sculpture', 'Sculpture', 'Sculpture-Alabaster', 'Sculpture-Architectural', 'Sculpture-Architectural-Stone', 'Sculpture-Bronze', 'Sculpture-Ceramics', 'Sculpture-Miniature', 'Sculpture-Stone', 'Sculpture-Wood', 'Stone Sculpture', 'Stone-Sculpture', 'Wood-Sculpture')"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              296
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 176,
+          "prompt_tokens": 2776,
+          "total_tokens": 2952,
+          "prompt_tokens_details": {
+            "cached_tokens": 2718
+          }
+        },
+        {
+          "completion_tokens": 19,
+          "prompt_tokens": 2975,
+          "total_tokens": 2994,
+          "prompt_tokens_details": {
+            "cached_tokens": 2752
+          }
+        }
+      ],
+      "elapsed_seconds": 12.447
+    },
+    {
+      "id": "q12",
+      "question": "Using object_physical_properties.classification, how many paintings are in the sample? Count each object_id once and return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          353
+        ]
+      ],
+      "submitted": [
+        [
+          353
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_physical_properties AS T2 ON T1.object_id = T2.object_id WHERE LOWER(TRIM(T2.classification)) IN ('paintings', 'miscellaneous-paintings', 'paintings-fresco', 'paintings-panels');"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              353
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 93,
+          "prompt_tokens": 2776,
+          "total_tokens": 2869,
+          "prompt_tokens_details": {
+            "cached_tokens": 1
+          }
+        },
+        {
+          "completion_tokens": 19,
+          "prompt_tokens": 2892,
+          "total_tokens": 2911,
+          "prompt_tokens_details": {
+            "cached_tokens": 2752
+          }
+        }
+      ],
+      "elapsed_seconds": 39.12
+    },
+    {
+      "id": "q13",
+      "question": "Using object_physical_properties.classification, how many drawings are in the sample? Count each object_id once and return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          113
+        ]
+      ],
+      "submitted": [
+        [
+          113
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_physical_properties AS T2 ON T1.object_id = T2.object_id WHERE LOWER(TRIM(T2.classification)) IN ('drawings');"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              113
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 73,
+          "prompt_tokens": 2776,
+          "total_tokens": 2849,
+          "prompt_tokens_details": {
+            "cached_tokens": 2729
+          }
+        },
+        {
+          "completion_tokens": 19,
+          "prompt_tokens": 2872,
+          "total_tokens": 2891,
+          "prompt_tokens_details": {
+            "cached_tokens": 2752
+          }
+        }
+      ],
+      "elapsed_seconds": 6.194
+    },
+    {
+      "id": "q14",
+      "question": "Using object_physical_properties.classification, how many prints are in the sample? Count each object_id once and return one count.",
+      "correct": false,
+      "status": "query_error",
+      "expected": [
+        [
+          55
+        ]
+      ],
+      "submitted": null,
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM object_physical_properties AS T1 INNER JOIN object_tags AS T2 ON T1.object_id = T2.object_id WHERE T2.tags @> '[\"term\": \"Print\", \"AAT_URL\": \"\"]'"
+      ],
+      "observations": [],
+      "errors": [
+        "This function is outside the SQL tool's allowlist."
+      ],
+      "finish_reasons": [
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 79,
+          "prompt_tokens": 2776,
+          "total_tokens": 2855,
+          "prompt_tokens_details": {
+            "cached_tokens": 2729
+          }
+        }
+      ],
+      "elapsed_seconds": 5.88
+    },
+    {
+      "id": "q15",
+      "question": "Using object_physical_properties.classification, how many furniture objects are in the sample? Count each object_id once and return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          23
+        ]
+      ],
+      "submitted": [
+        [
+          23
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_physical_properties AS T2 ON T1.object_id = T2.object_id WHERE T2.classification IN ('Furniture', 'Furniture-Wood', 'Wood-Furniture', 'Woodwork-Furniture');"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              23
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 82,
+          "prompt_tokens": 2777,
+          "total_tokens": 2859,
+          "prompt_tokens_details": {
+            "cached_tokens": 2729
+          }
+        },
+        {
+          "completion_tokens": 18,
+          "prompt_tokens": 2881,
+          "total_tokens": 2899,
+          "prompt_tokens_details": {
+            "cached_tokens": 2753
+          }
+        }
+      ],
+      "elapsed_seconds": 8.06
+    },
+    {
+      "id": "q16",
+      "question": "Using object_physical_properties.classification, how many architectural objects are in the sample? Count each object_id once and return one count.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          13
+        ]
+      ],
+      "submitted": [
+        [
+          13
+        ]
+      ],
+      "sql": [
+        "SELECT COUNT(T1.object_id) FROM public.object AS T1 INNER JOIN public.object_physical_properties AS T2 ON T1.object_id = T2.object_id WHERE T2.classification IN ('Sculpture-Architectural', 'Sculpture-Architectural-Stone', 'Wood-Architectural');"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "count"
+          ],
+          "rows": [
+            [
+              13
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 85,
+          "prompt_tokens": 2777,
+          "total_tokens": 2862,
+          "prompt_tokens_details": {
+            "cached_tokens": 2729
+          }
+        },
+        {
+          "completion_tokens": 18,
+          "prompt_tokens": 2884,
+          "total_tokens": 2902,
+          "prompt_tokens_details": {
+            "cached_tokens": 2753
+          }
+        }
+      ],
+      "elapsed_seconds": 7.916
+    },
+    {
+      "id": "q17",
+      "question": "Using object_physical_properties.classification, return only the object IDs of the five sculptures with the smallest object IDs, sorted by object ID ascending.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          37397
+        ],
+        [
+          38124
+        ],
+        [
+          38127
+        ],
+        [
+          38133
+        ],
+        [
+          38146
+        ]
+      ],
+      "submitted": [
+        [
+          37397
+        ],
+        [
+          38124
+        ],
+        [
+          38127
+        ],
+        [
+          38133
+        ],
+        [
+          38146
+        ]
+      ],
+      "sql": [
+        "SELECT T1.object_id FROM object_physical_properties AS T1 WHERE LOWER(BTRIM(T1.classification)) IN ('bark-sculpture', 'beads-sculpture', 'bone/ivory-sculpture', 'ceramics-sculpture', 'metal-sculpture', 'sculpture', 'sculpture-alabaster', 'sculpture-architectural', 'sculpture-architectural-stone', 'sculpture-bronze', 'sculpture-ceramics', 'sculpture-miniature', 'sculpture-stone', 'sculpture-wood', 'stone sculpture', 'stone-sculpture', 'wood-sculpture') ORDER BY T1.object_id ASC LIMIT 5"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "object_id"
+          ],
+          "rows": [
+            [
+              37397
+            ],
+            [
+              38124
+            ],
+            [
+              38127
+            ],
+            [
+              38133
+            ],
+            [
+              38146
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 182,
+          "prompt_tokens": 2778,
+          "total_tokens": 2960,
+          "prompt_tokens_details": {
+            "cached_tokens": 2727
+          }
+        },
+        {
+          "completion_tokens": 49,
+          "prompt_tokens": 3015,
+          "total_tokens": 3064,
+          "prompt_tokens_details": {
+            "cached_tokens": 2754
+          }
+        }
+      ],
+      "elapsed_seconds": 16.551
+    },
+    {
+      "id": "q18",
+      "question": "Using object_physical_properties.classification, return only the object IDs of the five architectural objects with the smallest object IDs, sorted by object ID ascending.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          199003
+        ],
+        [
+          202115
+        ],
+        [
+          205351
+        ],
+        [
+          311294
+        ],
+        [
+          313697
+        ]
+      ],
+      "submitted": [
+        [
+          199003
+        ],
+        [
+          202115
+        ],
+        [
+          205351
+        ],
+        [
+          311294
+        ],
+        [
+          313697
+        ]
+      ],
+      "sql": [
+        "SELECT T1.object_id FROM object_physical_properties AS T1 WHERE LOWER(BTRIM(T1.classification)) IN ('sculpture-architectural', 'sculpture-architectural-stone', 'wood-architectural') ORDER BY T1.object_id ASC LIMIT 5"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "object_id"
+          ],
+          "rows": [
+            [
+              199003
+            ],
+            [
+              202115
+            ],
+            [
+              205351
+            ],
+            [
+              311294
+            ],
+            [
+              313697
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 79,
+          "prompt_tokens": 2779,
+          "total_tokens": 2858,
+          "prompt_tokens_details": {
+            "cached_tokens": 1
+          }
+        },
+        {
+          "completion_tokens": 54,
+          "prompt_tokens": 2918,
+          "total_tokens": 2972,
+          "prompt_tokens_details": {
+            "cached_tokens": 2755
+          }
+        }
+      ],
+      "elapsed_seconds": 41.741
+    },
+    {
+      "id": "q19",
+      "question": "Using object_physical_properties.classification, return only the object IDs of the five paintings with the smallest object IDs, sorted by object ID ascending.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          36029
+        ],
+        [
+          36131
+        ],
+        [
+          36451
+        ],
+        [
+          36457
+        ],
+        [
+          37788
+        ]
+      ],
+      "submitted": [
+        [
+          36029
+        ],
+        [
+          36131
+        ],
+        [
+          36451
+        ],
+        [
+          36457
+        ],
+        [
+          37788
+        ]
+      ],
+      "sql": [
+        "SELECT T1.object_id FROM object_physical_properties AS T1 WHERE LOWER(BTRIM(T1.classification)) IN ('paintings') ORDER BY T1.object_id ASC LIMIT 5"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "object_id"
+          ],
+          "rows": [
+            [
+              36029
+            ],
+            [
+              36131
+            ],
+            [
+              36451
+            ],
+            [
+              36457
+            ],
+            [
+              37788
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 59,
+          "prompt_tokens": 2778,
+          "total_tokens": 2837,
+          "prompt_tokens_details": {
+            "cached_tokens": 2735
+          }
+        },
+        {
+          "completion_tokens": 49,
+          "prompt_tokens": 2892,
+          "total_tokens": 2941,
+          "prompt_tokens_details": {
+            "cached_tokens": 2754
+          }
+        }
+      ],
+      "elapsed_seconds": 7.462
+    },
+    {
+      "id": "q20",
+      "question": "Using object_physical_properties.classification, return only the object IDs of the five furniture objects with the smallest object IDs, sorted by object ID ascending.",
+      "correct": true,
+      "status": "submitted",
+      "expected": [
+        [
+          194622
+        ],
+        [
+          195456
+        ],
+        [
+          195473
+        ],
+        [
+          198715
+        ],
+        [
+          202141
+        ]
+      ],
+      "submitted": [
+        [
+          194622
+        ],
+        [
+          195456
+        ],
+        [
+          195473
+        ],
+        [
+          198715
+        ],
+        [
+          202141
+        ]
+      ],
+      "sql": [
+        "SELECT T1.object_id FROM object_physical_properties AS T1 WHERE LOWER(BTRIM(T1.classification)) IN ('furniture', 'furniture-wood', 'wood-furniture', 'woodwork-furniture') ORDER BY T1.object_id ASC LIMIT 5"
+      ],
+      "observations": [
+        {
+          "columns": [
+            "object_id"
+          ],
+          "rows": [
+            [
+              194622
+            ],
+            [
+              195456
+            ],
+            [
+              195473
+            ],
+            [
+              198715
+            ],
+            [
+              202141
+            ]
+          ],
+          "truncated": false
+        }
+      ],
+      "errors": [],
+      "finish_reasons": [
+        "stop",
+        "stop"
+      ],
+      "usage": [
+        {
+          "completion_tokens": 74,
+          "prompt_tokens": 2779,
+          "total_tokens": 2853,
+          "prompt_tokens_details": {
+            "cached_tokens": 2735
+          }
+        },
+        {
+          "completion_tokens": 54,
+          "prompt_tokens": 2913,
+          "total_tokens": 2967,
+          "prompt_tokens_details": {
+            "cached_tokens": 2755
+          }
+        }
+      ],
+      "elapsed_seconds": 8.346
+    }
+  ]
+}
