@@ -1,0 +1,12 @@
+{
+  "kind": "Source-derived counts, not model evaluation scores",
+  "approved_furniture_count": 23,
+  "violated_furniture_count": 22,
+  "excluded_objects": [
+    {
+      "object_id": 314034,
+      "title": "Lupona (royal seat)",
+      "classification": "Wood-Furniture"
+    }
+  ]
+}
