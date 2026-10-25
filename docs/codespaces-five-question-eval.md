@@ -1,5 +1,8 @@
 # Run the 20-question eval in Codespaces
 
+> For the current two-condition category workshop, follow [README Part 2](../README.md#-part-2-implementing-semantic-contracts-with-metadata-application-profiles). This page retains the earlier evaluation commands and rehearsal history.
+
+
 Use branch `codex/five-question-codespaces`. The branch name is unchanged, but its
 default now runs all 20 questions with the improved prompt, matching the latest
 local rehearsal. Use a four-core, 16 GB Codespace and wait for workshop startup

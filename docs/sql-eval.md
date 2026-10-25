@@ -1,5 +1,8 @@
 # Museum SQL evaluation
 
+> For the current two-condition category workshop, follow [README Part 2](../README.md#-part-2-implementing-semantic-contracts-with-metadata-application-profiles). This page retains the earlier evaluation commands and rehearsal history.
+
+
 For the current-prompt → semantic-prompt comparison followed by the MAP/data-contract
 GitHub exercise, follow [the MAP workflow](prompt-map-workflow.md). The original
 three-stage commands below remain available for historical rehearsals.

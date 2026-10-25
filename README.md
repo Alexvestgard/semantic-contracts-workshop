@@ -1058,3 +1058,285 @@ Walking away from this chapter, you should have been able to achieve the followi
 Again, we want to highlight that this implementation and sandbox environment is intended for learning purposes. Scaling beyond a few a data contracts increases the complexity of of managing their lifecycle, and thus you should strongly consider the tradeoffs of building your own, leveraging an open-source tool, or buying a dedicated product (e.g. data catalog service) for each component of the data contract architecture.
 
 In the next chapter, we continue moving away from just theory and present three unique real-world case studies of data contracts in production from companies we interviewed for the book.
+
+---
+
+# 📘 Part 2: Implementing Semantic Contracts with Metadata Application Profiles
+
+In Part 1, we used a data contract to detect changes to the museum database. We now continue with an AI assistant that queries the same data. A query can run successfully and still answer the wrong question if the assistant uses the wrong meaning of a category.
+
+In this exercise, we will run two evaluations, compare their answers, and protect the second prompt with a Metadata Application Profile (MAP) in our original data contract. We will then remove an agreed category label, see GitHub report the violation, and repair it.
+
+We aim for you to achieve the following by going through Part 2:
+
+1. Evaluate two prompts against the same 20 museum questions.
+2. Define how the Met sample's labels map to six categories.
+3. Use locally stored Linked Art definitions as a shared reference.
+4. Detect a prompt's disagreement with the MAP locally and in GitHub Actions.
+5. Repair the prompt and see the check and PR comment return to passing.
+
+> [!NOTE]
+> Follow the commands manually in one GitHub Codespaces terminal. There are exactly two model evaluations: the general prompt and the prompt with MAP + Linked Art. The violation and repair do not need another model run. A failed check blocks merging only where repository rules require it; this walkthrough does not change those rules.
+
+## Mock Semantic Contract Scenario Intro
+
+The museum assistant answers questions about sculpture, painting, drawing, print, furniture, and architectural objects. The source classification `Furniture` is only one furniture label: this sample also uses `Furniture-Wood`, `Wood-Furniture`, and `Woodwork-Furniture`. `Sword Furniture-Tsuba` describes a sword fitting and is excluded from our Furniture mapping.
+
+These are choices about meaning, not missing data. Our MAP makes the agreed category membership explicit. Linked Art supplies a common concept and identifier for each category. It does not decide which Met records belong to that category for us.
+
+### Dataset and Evaluation
+
+We use the same 3,025 checked-in Met object records from Part 1. The [question set](eval/category-comparison/questions.json) has ten basic questions and ten medium category questions:
+
+| Questions | Task |
+| --- | --- |
+| q01–q10 | General sample counts, missing values, public-domain status, and a small object listing |
+| q11–q16 | Count sculptures, paintings, drawings, prints, furniture, and architectural objects |
+| q17–q20 | Return the five smallest object IDs for sculpture, architectural objects, painting, and furniture |
+
+The medium questions name the classification field. Their reference queries use one table; the semantic task is applying the category membership. The model has one read-only SQL attempt per question. If the query succeeds, it submits the answer rows. A separate scorer checks those values against reference answers that are unavailable to the agent.
+
+| Condition | What the agent receives |
+| --- | --- |
+| [Prompt only](eval/category-comparison/prompt-only.json) | The general SQL prompt, including eight rules about fields, joins, missing values, and answer format |
+| [Prompt + MAP + Linked Art](eval/category-comparison/prompt-map-linked-art.json) | The same general prompt, plus local category mappings and six embedded Linked Art definitions |
+
+“Prompt only” means no category mapping. It is the existing general semantic prompt, not the repository's older minimal baseline. Both runs use the same model, questions, database, order, decoding settings, and limits. There is no MAP-only evaluation in this workshop.
+
+### What the Metadata Application Profile Covers
+
+The category profile lives inside `metadataApplicationProfile.additionalProfiles` in the [original data contract](data_contract_components/contract_definition/object_images_contract_spec.json). Its ID is `museum-met-categories-map-linked-art`.
+
+| Local category | Agreed source labels | Linked Art concept |
+| --- | --- | --- |
+| Sculpture | The complete 17-label list in the contract | Sculpture, AAT 300047090 |
+| Painting | Miscellaneous-Paintings; Paintings; Paintings-Fresco; Paintings-Panels | Painting, AAT 300033618 |
+| Drawing | Drawings | Drawing, AAT 300033973 |
+| Print | Prints | Print, AAT 300041273 |
+| Furniture | Furniture; Furniture-Wood; Wood-Furniture; Woodwork-Furniture | Furniture, AAT 300037680 |
+| Architectural objects | Sculpture-Architectural; Sculpture-Architectural-Stone; Wood-Architectural | Architecture, AAT 300263552 |
+
+Match complete labels after trimming surrounding spaces, and count each object ID once. Categories may overlap: architectural sculpture belongs to both Sculpture and Architectural objects. Missing classifications are unknown; other populated classifications are unmapped, not proof that an object cannot belong to a category.
+
+The [Linked Art vocabulary page](vendor/linked-art/guidance/recommended-vocabulary.md) and its license are stored locally at a pinned revision. The selected definitions are embedded in the prompt, so the model does not need web access. The source descriptions remain unchanged. The Met mappings are local workshop agreements with documented curatorial limitations, not claims of exact equivalence or full Linked Art conformance.
+
+### Project Repo Overview
+
+```txt
+/workspace
+├── eval/category-comparison/
+│   ├── questions.json                   # Ten basic + ten medium questions
+│   ├── prompt-only.json                 # General prompt
+│   ├── prompt-map-linked-art.json        # Governed category prompt
+│   └── gold/answers.json                # Scorer-only reference answers
+├── data_contract_components/contract_definition/
+│   └── object_images_contract_spec.json  # Original contract with MAP profiles
+├── vendor/linked-art/guidance/           # Pinned vocabulary and license
+├── scripts/
+│   ├── build_category_eval.py           # Check reproducible fixtures
+│   ├── run_category_eval.py             # Run and score the two conditions
+│   ├── check_prompt_map.py              # Validate the governed prompts
+│   └── sql_eval.py                      # Build/start/stop the local model tools
+└── .github/workflows/
+    ├── prompt-map.yml                   # Validate against the base branch's MAP
+    ├── prompt-map-comment.yml           # Explain the result on the PR
+    └── sql-eval.yml                     # Test fixtures, reference SQL, and isolation
+```
+
+The original database contract and its checks remain in place. The added asset is the prompt; the MAP records its approved meaning and instructions. Evaluation measures the answers. MAP validation checks the prompt's agreement with the contract.
+
+## Semantic Contract Violation Scenario
+
+### I - Prepare a fresh GitHub Codespace
+
+Use a fresh Codespace so schema changes from Part 1 do not affect the reference queries. Start from the version containing `eval/category-comparison/` and this walkthrough. While the two implementation PRs are under review, select `codex/met-semantic-workshop`; after they are merged, use `main`.
+
+1. If working in a fork, make sure it contains the selected workshop branch. Open **Actions** and enable workflows if GitHub asks you to do so.
+2. Select **Code > Codespaces > New with options**, choose that branch, and use **4 cores and 16 GB RAM**.
+3. Wait for the development container, database migrations, and sample-data loading to finish. Open **Terminal > New Terminal**.
+
+From the repository root:
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+git status --short
+python3 --version
+docker version
+docker compose version
+```
+
+Start with a clean Git status, Python 3.12 or newer, and a running Docker server with Compose 2.20 or newer. Rebuild an older Codespace if its Docker setup is missing. Record the branch that already contains the approved MAP, then create your exercise branch:
+
+```bash
+base_branch=$(git branch --show-current)
+printf 'PR base branch: %s\n' "$base_branch"
+git switch -c workshop/met-category-map
+```
+
+> [!NOTE]
+> The pinned Gemma model runs on the Codespace's CPU without a hosted inference account or API key. Its first download is approximately 4.09 GB, plus container images. Allow extra time for download and inference. Codespaces compute and storage charges still apply.
+
+### II - Build the evaluation environment and check the database
+
+Run each command separately and continue only after it succeeds:
+
+```bash
+python3 scripts/sql_eval.py build
+python3 scripts/sql_eval.py start
+python3 scripts/run_category_eval.py --verify-gold
+python3 scripts/sql_eval.py isolation
+```
+
+`start` connects the existing workshop database, prepares the read-only eval role, and initializes the pinned model. It does not reseed museum rows. The category reference check should print:
+
+```text
+All 20 reference queries agree with independent source-derived answers.
+```
+
+The isolation check should confirm that the gold sentinel, scorer, repository mount, and Docker socket are absent from the agent image. If several PostgreSQL containers exist, list them with `docker ps --filter label=com.docker.compose.service=postgres --format '{{.Names}}'`, set `SQL_EVAL_DB_CONTAINER` to your workshop container, and rerun `start`. Do not change reference answers to compensate for the wrong database.
+
+### III - Inspect the prompts and freeze the comparison
+
+Open the two prompt files and the question set in `eval/category-comparison/`. Leave them unchanged for both evaluations. Check that the fixtures reproduce from the contract and pinned vocabulary:
+
+```bash
+python3 scripts/build_category_eval.py --check
+```
+
+Create an evidence directory. The runner's output subdirectory must not exist yet:
+
+```bash
+set -o pipefail
+mkdir -p artifacts
+evidence_dir=$(mktemp -d "$PWD/artifacts/met-workshop-XXXXXX")
+run_dir="$evidence_dir/evaluation"
+printf '%s\n' "$evidence_dir" > artifacts/met-workshop-latest.txt
+```
+
+If you open another terminal, recover these variables with `evidence_dir=$(cat artifacts/met-workshop-latest.txt)` and `run_dir="$evidence_dir/evaluation"`, and run `set -o pipefail` again.
+
+### IV - Run and score the two prompts
+
+```bash
+python3 scripts/run_category_eval.py --out "$run_dir" 2>&1 | tee "$evidence_dir/evaluation.log"
+```
+
+The runner freezes the inputs, checks reference answers, and runs `prompt-only` followed by `prompt-map-linked-art`. Each condition answers q01–q20 and is scored only after its agent process exits. The terminal prints progress, both scores, and the comparison. The internal stage name is `improved` in both manifests; the folder and prompt identify the condition.
+
+Do not change prompts, questions, gold, budgets, or data during the run. Keep errors and wrong answers in the results. To repeat the comparison, use a new evidence directory.
+
+### V - Compare the scores and inspect the answers
+
+```bash
+python3 -m json.tool "$run_dir/comparison.json"
+python3 -m json.tool "$run_dir/prompt-only-reports/report.json"
+python3 -m json.tool "$run_dir/prompt-map-linked-art-reports/report.json"
+```
+
+Compare the basic and medium scores separately, as well as the total out of 20. The comparison lists fixed and regressed questions and checks that the run controls match. See the [recorded two-condition run](docs/evidence/met-two-condition-eval/README.md) for a completed example; your scores can differ. A tie or decline is a valid result. One pair is a teaching diagnostic, not a general performance guarantee.
+
+Inspect the generated SQL, database observation or error, and final answer for a question:
+
+```bash
+python3 -m json.tool "$run_dir/prompt-only/q11.json"
+python3 -m json.tool "$run_dir/prompt-map-linked-art/q11.json"
+```
+
+Stop the model now. The remaining steps do not need inference:
+
+```bash
+python3 scripts/sql_eval.py stop
+```
+
+### VI - Inspect the MAP in the original data contract
+
+Open `data_contract_components/contract_definition/object_images_contract_spec.json`. Find `museum-met-categories-map-linked-art` in `metadataApplicationProfile.additionalProfiles`. Inspect `categoryMapping`, `linkedArtReferences`, `approved_instructions`, and the eight general semantic elements. Leave the database schema and MAP unchanged during the exercise.
+
+Validate the approved prompts:
+
+```bash
+python3 scripts/check_prompt_map.py \
+  --report "$evidence_dir/map-pass.json" --markdown "$evidence_dir/map-pass.md"
+```
+
+Expect `Prompt MAP: PASS`. The checker verifies instruction text and semantic settings; it does not guarantee that the model generates correct SQL. Both the original general prompt and the category prompt are checked.
+
+### VII - Remove an agreed category and trigger a violation
+
+Suppose someone shortens the Furniture mapping by dropping `Wood-Furniture`. Apply that exact edit to the prompt:
+
+```bash
+python3 - <<'PY'
+import json
+from pathlib import Path
+path = Path('eval/category-comparison/prompt-map-linked-art.json')
+prompt = json.loads(path.read_text())
+removed = '"Wood-Furniture", '
+assert prompt['instructions'].count(removed) == 1
+prompt['instructions'] = prompt['instructions'].replace(removed, '')
+path.write_text(json.dumps(prompt, indent=2, ensure_ascii=False) + '\n')
+PY
+
+git diff -- eval/category-comparison/prompt-map-linked-art.json
+python3 scripts/check_prompt_map.py \
+  --report "$evidence_dir/map-fail.json" --markdown "$evidence_dir/map-fail.md"
+```
+
+The final command should exit with code 1 and report `Prompt MAP: FAIL`. Look for `Rule: prompt.instructions` and `Missing mapped labels in instruction text: ["Wood-Furniture"]`. The expected and actual instructions show the change. This alters which objects qualify as furniture while leaving the database unchanged.
+
+### VIII - Push the violation and inspect the GitHub comment
+
+```bash
+git add eval/category-comparison/prompt-map-linked-art.json
+git commit -m "Demonstrate a furniture category MAP violation"
+git push -u origin workshop/met-category-map
+```
+
+On GitHub, choose **Compare & pull request**. Select the recorded `base_branch` as the base and `workshop/met-category-map` as the compare branch. In a fork, select your fork as both base and head repository. Create the PR and leave it open.
+
+Open **Checks > Prompt MAP contract**. It should fail on `prompt.instructions`. After **Explain MAP result / explain** finishes, the **Conversation** tab should show a bot comment headed **Prompt MAP: FAIL**, with the tested commit and a link to the failed run. The workflow summary and report artifact preserve the details. The SQL eval checks can also fail because fixture and contract tests reject the altered prompt.
+
+The base branch supplies approved policy. Editing the MAP alongside the prompt does not silently approve a different interpretation. Checks run on any branch, including stacked PRs.
+
+> [!NOTE]
+> The comment explains the failed check. It blocks merging only if the target branch requires that check; this walkthrough does not configure branch protection. If the comment is missing, inspect the separate comment job and confirm that Actions is enabled. Cross-repository fork PRs may need workflow approval and the default branch's reporter.
+
+### IX - Repair the prompt and see the checks pass
+
+Restore the prompt from the unchanged contract and local vocabulary:
+
+```bash
+python3 scripts/build_category_eval.py
+python3 scripts/build_category_eval.py --check
+python3 scripts/check_prompt_map.py \
+  --report "$evidence_dir/map-repaired.json" --markdown "$evidence_dir/map-repaired.md"
+git diff -- eval/category-comparison/
+```
+
+The checker should report `Prompt MAP: PASS`. The diff should restore only the removed label in the governed prompt. Then commit and push the repair:
+
+```bash
+git add eval/category-comparison/prompt-map-linked-art.json
+git commit -m "Restore the approved furniture category mapping"
+git push
+```
+
+On the same PR, wait for the checks on the newest commit. The MAP check should pass, and the bot should update its comment to **Prompt MAP: PASS**. The earlier failed run remains in Actions history. No model rerun is needed to validate this repair.
+
+Your exercise PR may have no net file changes after restoration. That is expected: its commits and checks preserve the demonstration. You may close it after reviewing the results. See the [workshop rehearsal record](docs/evidence/semantic-workshop/README.md) for the implementation's failed and repaired GitHub runs.
+
+### X - Keep the evidence and stop the Codespace
+
+The ignored `artifacts/` directory contains your scores, traces, frozen inputs, and passing/failing/repaired MAP reports. Download it before deleting the Codespace, or make an archive:
+
+```bash
+tar -czf "${evidence_dir}.tar.gz" -C "$(dirname "$evidence_dir")" "$(basename "$evidence_dir")"
+```
+
+Use the editor's Explorer to download the archive. If you stopped before step V, run `python3 scripts/sql_eval.py stop`. Then use **Codespaces: Stop Current Codespace** or the [Codespaces dashboard](https://github.com/codespaces) to stop compute charges.
+
+## Part 2 Conclusion
+
+We followed the same change, detect, and repair pattern used for the database contract. The proposed change now affected the agreed meaning of Furniture in a prompt.
+
+The two evaluations show how the assistant answered under different instructions. The MAP check shows whether the prompt preserves the agreement. Linked Art supplies shared category references; the local MAP explains how those references apply to this Met sample. Both kinds of evidence are available for review in GitHub.
