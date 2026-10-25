@@ -17,6 +17,11 @@ queries matched the checked-in source data, and the agent isolation check passed
 4. The builder restored the prompt from the unchanged contract and pinned source.
    The restored prompt matches the approved base byte-for-byte, and the
    [local repaired check passes](local-repaired.json).
+5. Repair commit [`484e3a5`](https://github.com/onthemarkdata/semantic-contracts-workshop/commit/484e3a57d0981d588f219b6c83c890a665ee4bc8)
+   passed the [GitHub MAP run](https://github.com/onthemarkdata/semantic-contracts-workshop/actions/runs/40156764660).
+   The bot updated its comment to **Prompt MAP: PASS**. The
+   [captured repaired comment](github-repaired-comment.json) and
+   [repaired-run record](github-repaired-run.json) preserve that result.
 
 The [captured failed bot comment](github-fail-comment.json) and
 [failed-run record](github-fail-run.json) preserve the failure. The live
