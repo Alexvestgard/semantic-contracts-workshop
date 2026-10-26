@@ -21,12 +21,10 @@ def within(root, relative):
     return path
 
 
-def check(policy_root, candidate_root, prompt_path=None):
+def check_profile(candidate_root, ref, prompt_path=None):
     violations = []
     def reject(rule, expected, actual, message):
         violations.append(dict(rule=rule, expected=expected, actual=actual, message=message))
-    contract = read_json(policy_root / CONTRACT)
-    ref = contract['metadataApplicationProfile']
     profile = ref
     if (not isinstance(profile.get('id'), str) or not profile['id']
             or not isinstance(profile.get('version'), str) or not profile['version']):
@@ -38,7 +36,14 @@ def check(policy_root, candidate_root, prompt_path=None):
     if set(prompt) != {'instructions', 'semantics'}:
         reject('prompt.fields', ['instructions', 'semantics'], sorted(prompt), 'Only approved prompt fields are allowed.')
     if prompt.get('instructions') != ref['approved_instructions']:
-        reject('prompt.instructions', ref['approved_instructions'], prompt.get('instructions'), 'Free-text instructions differ from the approved data contract.')
+        message = 'Free-text instructions differ from the approved data contract.'
+        actual = prompt.get('instructions')
+        if isinstance(actual, str):
+            missing = sorted({label for labels in ref.get('categoryMapping', {}).values()
+                              for label in labels if json.dumps(label, ensure_ascii=False) not in actual})
+            if missing:
+                message += ' Missing mapped labels in instruction text: ' + json.dumps(missing)
+        reject('prompt.instructions', ref['approved_instructions'], actual, message)
     semantics = prompt.get('semantics')
     if not isinstance(semantics, dict):
         raise ValueError('Prompt semantics must be a JSON object.')
@@ -67,6 +72,20 @@ def check(policy_root, candidate_root, prompt_path=None):
         actual = tables[0].get(element['id'], {}).get(element['required_value'])
         if actual != element['definition']:
             reject('render.' + element['id'], element['definition'], actual, 'Rendered rule text differs from the approved MAP.')
+    return dict(status='fail' if violations else 'pass', asset=asset,
+                map_id=profile['id'], map_version=profile['version'], violations=violations)
+
+
+def check(policy_root, candidate_root, prompt_path=None):
+    ref = read_json(policy_root / CONTRACT)['metadataApplicationProfile']
+    profiles = [ref] if prompt_path else [ref, *ref.get('additionalProfiles', [])]
+    if (len({p['id'] for p in profiles}) != len(profiles)
+            or len({p['promptAssetResourceName'] for p in profiles}) != len(profiles)):
+        raise ValueError('MAP profiles must have distinct identifiers and prompt assets.')
+    reports = [check_profile(candidate_root, p, prompt_path) for p in profiles]
+    violations = [dict(v, asset=r['asset']) for r in reports for v in r['violations']]
+    def reject(rule, expected, actual, message):
+        violations.append(dict(rule=rule, expected=expected, actual=actual, message=message))
     # In PRs the base branch owns policy; changing prompt and policy together cannot evade it.
     if policy_root.resolve() != candidate_root.resolve():
         candidate_contract = read_json(within(candidate_root, CONTRACT))
@@ -77,14 +96,15 @@ def check(policy_root, candidate_root, prompt_path=None):
             if within(policy_root, relative).read_bytes() != within(candidate_root, relative).read_bytes():
                 reject('policy.change', 'approved base-branch policy', relative,
                        'Policy or validator changes require separate maintainer review; this PR is checked against the base policy.')
-    return dict(status='fail' if violations else 'pass', asset=asset,
-                map_id=profile['id'], map_version=profile['version'], violations=violations)
+    return dict(status='fail' if violations else 'pass', asset=reports[0]['asset'],
+                map_id=ref['id'], map_version=ref['version'],
+                checked_assets=[r['asset'] for r in reports], violations=violations)
 
 
 def markdown(report):
     lines = [MARKER, '## Prompt MAP: ' + report['status'].upper(), '',
-             'The required **Prompt MAP contract** check enforces the prompt contract. '
-             'This comment explains the result; the comment itself does not block merging.', '']
+             'The **Prompt MAP contract** check validates the prompt contract. '
+             'It blocks merging only when required by the target branch rules.', '']
     for item in report['violations']:
         # The workflow reporter escapes these values before posting them in a pre block.
         lines += [f"Rule: {item['rule']}", f"Expected: {json.dumps(item['expected'], ensure_ascii=False)}",

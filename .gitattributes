@@ -1,0 +1,3 @@
+# Preserve the exact bytes and checksums of the pinned upstream documentation.
+vendor/linked-art/guidance/recommended-vocabulary.md -whitespace
+vendor/linked-art/guidance/LICENSE -whitespace
