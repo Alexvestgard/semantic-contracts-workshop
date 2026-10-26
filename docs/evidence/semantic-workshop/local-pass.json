@@ -1,0 +1,11 @@
+{
+  "status": "pass",
+  "asset": "eval/prompts/semantic.json",
+  "map_id": "museum-sql-prompt-map",
+  "map_version": "1.1.0",
+  "checked_assets": [
+    "eval/prompts/semantic.json",
+    "eval/category-comparison/prompt-map-linked-art.json"
+  ],
+  "violations": []
+}

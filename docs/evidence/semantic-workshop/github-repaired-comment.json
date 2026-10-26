@@ -1,0 +1,6 @@
+{
+  "html_url": "https://github.com/onthemarkdata/semantic-contracts-workshop/pull/28#issuecomment-6392729573",
+  "created_at": "2026-10-25T03:00:57Z",
+  "updated_at": "2026-10-25T03:03:26Z",
+  "body": "<!-- museum-prompt-map -->\n## Prompt MAP: PASS\n\nCommit: `484e3a57d0981d588f219b6c83c890a665ee4bc8`\n\nThe **Prompt MAP contract** check passed. When required by the target branch rules, a failed check blocks merging. This comment explains the result.\n\n<pre>The prompt satisfies the approved MAP. This does not prove model accuracy.</pre>\n\n[View check](https://github.com/onthemarkdata/semantic-contracts-workshop/actions/runs/40156764660)"
+}

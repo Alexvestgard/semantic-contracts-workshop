@@ -1,5 +1,15 @@
 # Semantic contracts workshop: review proposal
 
+> **Current semantic workshop:** Use the 20-question category set: ten basic
+> questions and ten medium questions across six Met categories. Run exactly two
+> conditions: the general prompt and the prompt with MAP + local Linked Art
+> definitions. The fresh pair scored 10/20 and 16/20. The MAP stays in the
+> original data contract. Demonstrate removal and repair of `Wood-Furniture`
+> through GitHub checks, without another model run. See the
+> [Part 2 walkthrough](../README.md#-part-2-implementing-semantic-contracts-with-metadata-application-profiles)
+> and [rehearsal evidence](evidence/semantic-workshop/README.md).
+> Earlier experiments below are retained as planning history.
+
 > **Current MAP workflow:** Mark requested two evaluations: preserve the current
 > prompt for the first, then test a semantics-focused prompt with unchanged
 > questions and scoring. Add the MAP as a new section of the original data
